@@ -5,6 +5,7 @@ import atexit
 import traceback
 from dotenv import dotenv_values
 from infestation_manager import annoyingBug, bugSpray
+from roach_recruitment import recruiterVerification, recruitRoaches
 
 try:
     config = dotenv_values(".env")
@@ -12,13 +13,13 @@ try:
         dbname=config["INFESTATION_PROPAGATOR"], 
         user=config["INFESTATION_TARGET"],
         password=config["INFESTATION_KEY"], 
-        host=config["INFESTATION"],
+        host=config["INFESTATION_HOST"],
         port=config["INFESTANT_AMOUNT"],
         cursor_factory=RealDictCursor
     )
     print('Successful connection to the database')
 except Exception as error:
-    print('Database connection error')
+    print('Database connection error:', str(error))
 
 app = Flask(__name__)
 port = 7341
@@ -43,19 +44,82 @@ def get_infestants():
         if 'cursor' in locals():
             cursor.close()
 
-@app.route('/infestant', methods=['POST'])
-def get_author():
+@app.route('/verification', methods=['POST'])
+def jwt_verification():
     try:
         data = request.json
-        print(data.get('email'))
-        email = data.get('email')
+        # print(data.get('email'))
+        jwt = data.get('token')
+        email = recruiterVerification(jwt, config)
+        
         cursor = connection.cursor()
+        # cipher = annoyingBug(email, 1, config)
+        # print(str(cipher.decode('utf-8')))
         cursor.execute("SELECT * FROM public.flutter_users WHERE email = %s", (email,))
-        results = cursor.fetchall()
-        return jsonify({'users': results})
+        response = cursor.fetchall()
+        results = jsonify({"results": response})
+        print(results)
+        if response[0]["verified"] == "true":
+            return jsonify({'message': 'User already verified'}), 409
+        else:
+            cursor.execute("UPDATE public.flutter_users SET verified = 'true' WHERE email = %s", (email,))
+            return jsonify({'message': 'Accepted'}), 202
     except Exception as error:
         print('Error', error)
         print(traceback.format_exc())
+        return jsonify({'message': 'Internal server error'}), 500
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+
+@app.route('/guest', methods=['POST'])
+def unverified_guest():
+    try:
+        data = request.json
+        email = data.get('email')
+        print("Email: ", email)
+        # enc_email = annoyingBug(email, 1, config)
+        if not email:
+            return jsonify({'message': 'Invalid input data'}), 400
+        cursor = connection.cursor()
+        # print("ENCRYPTED EMAIL: ", enc_email)
+        cursor.execute("INSERT INTO flutter_users (email) VALUES (%s)", (email,))
+        connection.commit()
+        # result = cursor.fetchone()
+        recruitRoaches(email, config)
+        return jsonify({'result': "ok"}), 201
+    except Exception as error:
+        print('Error', error)
+        print(traceback.format_exc())
+        connection.rollback()
+        if ("duplicate key value" in str(error) and "Key (email)" in str(error)):
+            return jsonify({'message': 'User already registered'}), 500
+        else:
+            return jsonify({'message': 'Internal server error'}), 500
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+
+@app.route('/registration', methods=['POST'])
+def registration():
+    try:
+        data = request.json
+        name = annoyingBug(data.get('name'), 0, config)
+        email = annoyingBug(data.get('email'), 1, config)
+        subscription_type = data.get('subscription_type')
+        password = annoyingBug(data.get('password'), 2, config)
+        verified = data.get('verified')
+        platform = data.get('platform')
+        if not email or not subscription_type or not platform:
+            return jsonify({'message': 'Invalid input data'}), 400
+        cursor = connection.cursor()
+        cursor.execute("UPDATE flutter_users SET name = %s, subscription_type = %s, password = %s, verified = %s, platform = %s WHERE email = %s", (name, subscription_type, password, verified, platform, email))
+        
+        connection.commit()
+        result = cursor.fetchone()
+        return jsonify({'author': result}), 201
+    except Exception as error:
+        print('Error', error)
         return jsonify({'message': 'Internal server error'}), 500
     finally:
         if 'cursor' in locals():
@@ -91,6 +155,33 @@ def infest():
 
 @app.route('/locate', methods=['POST'])
 def locate():
+    try:
+        data = request.json
+        email = annoyingBug(data.get('email'), 1, config)
+        password = annoyingBug(data.get('password'), 2, config)
+        if not email or not password:
+            return jsonify({'message': 'Invalid input data'}), 400
+        cursor = connection.cursor()
+        cursor.execute("SELECT COUNT(*) > 0 AS row_exists FROM your_table_name WHERE name = %s AND password = %s", (email,  password))
+        connection.commit()
+        result = cursor.fetchone()
+        if result['row_exists'] == True:
+            return jsonify({'result': "ok"}), 201
+        else: 
+            raise(Exception("Invalid credentials"))
+    except Exception as error:
+        print('Error', error)
+        connection.rollback()
+        if ("Invalid credentials" in str(error)):
+            return jsonify({'message': 'Invalid credentials'}), 403
+        else:
+            return jsonify({'message': 'Internal server error'}), 500
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+
+@app.route('/locate', methods=['POST'])
+def locate_jwt():
     try:
         data = request.json
         email = annoyingBug(data.get('email'), 1, config)

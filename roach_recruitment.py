@@ -5,12 +5,12 @@ import jwt
 from jwt.exceptions import ExpiredSignatureError
 from cryptography.hazmat.primitives import serialization
 # read and load the key
-private_key = open('.ssh/id_rsa', 'r').read()
+private_key = open('ssh/.ssh/id_rsa', 'r').read()
 key = serialization.load_ssh_private_key(private_key.encode(), password=b'')
 
 load_dotenv(".env", override=True)
 config = dotenv_values(".env")
-def recruiteRoaches(email, config):
+def recruitRoaches(email, config):
     payload_data = {
         "email": email+config["ROACH_PRINCESS"]
     }
@@ -21,11 +21,11 @@ def recruiteRoaches(email, config):
     )
 
 
-    print(config)
-    subject = "Email Subject"
-    body = "This is the body of the text message"
+    # print(config)
+    subject = "Verify your email address"
+    body = "Please click on the following link to verify your email address: http://localhost:63621/verifyEmail?token="+new_token
     sender = config["ROACH_RECRUITER"]
-    recipients = ["marksdocenko@outlook.com"]
+    recipients = [email]
     password = config["ROACH_CRY"]
 
     send_email(subject, body, sender, recipients, password)
@@ -46,8 +46,10 @@ def recruiterVerification(token, config):
     try:
         payload = jwt.decode(
             token,
-            key='my_super_secret',
+            key=key.public_key(),
             algorithms=[header_data['alg'], ]
         )
+        print("Payload: ", payload)
+        return payload["email"].replace(config["ROACH_PRINCESS"], "")
     except ExpiredSignatureError as error:
         print(f'Unable to decode the token, error: {error}')
