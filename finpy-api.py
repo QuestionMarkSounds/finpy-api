@@ -3,6 +3,7 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 import atexit
 import traceback
+from werkzeug.security import check_password_hash, generate_password_hash
 from dotenv import dotenv_values
 from infestation_manager import annoyingBug, bugSpray
 from roach_recruitment import recruiterVerification, recruitRoaches
@@ -104,20 +105,21 @@ def unverified_guest():
 def registration():
     try:
         data = request.json
-        name = annoyingBug(data.get('name'), 0, config)
-        email = annoyingBug(data.get('email'), 1, config)
-        subscription_type = data.get('subscription_type')
-        password = annoyingBug(data.get('password'), 2, config)
-        verified = data.get('verified')
-        platform = data.get('platform')
-        if not email or not subscription_type or not platform:
+        token = data.get('token')
+        name = data.get('name')
+        email = data.get('email')
+        if email != recruiterVerification(token):
+            return jsonify({'message': 'Invalid token'}), 403
+        password = data.get('password')
+        password_hash = generate_password_hash(password)
+        if not email or not name or not password:
             return jsonify({'message': 'Invalid input data'}), 400
         cursor = connection.cursor()
-        cursor.execute("UPDATE flutter_users SET name = %s, subscription_type = %s, password = %s, verified = %s, platform = %s WHERE email = %s", (name, subscription_type, password, verified, platform, email))
+        cursor.execute("UPDATE flutter_users SET name = %s, password = %s, WHERE email = %s", (name, password_hash, email))
         
         connection.commit()
         result = cursor.fetchone()
-        return jsonify({'author': result}), 201
+        return jsonify({'result': 'ok'}), 201
     except Exception as error:
         print('Error', error)
         return jsonify({'message': 'Internal server error'}), 500
