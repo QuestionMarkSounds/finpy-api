@@ -7,6 +7,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from dotenv import dotenv_values
 from infestation_manager import annoyingBug, bugSpray
 from roach_recruitment import recruiterVerification, recruitRoaches
+from http import HTTPStatus
 
 try:
     config = dotenv_values(".env")
@@ -52,10 +53,8 @@ def jwt_verification():
         # print(data.get('email'))
         jwt = data.get('token')
         email = recruiterVerification(jwt, config)
-        
+        print("JWT VERIFIED EMAIL: ", email)
         cursor = connection.cursor()
-        # cipher = annoyingBug(email, 1, config)
-        # print(str(cipher.decode('utf-8')))
         cursor.execute("SELECT * FROM public.flutter_users WHERE email = %s", (email,))
         response = cursor.fetchall()
         results = jsonify({"results": response})
@@ -79,24 +78,33 @@ def unverified_guest():
         data = request.json
         email = data.get('email')
         print("Email: ", email)
-        # enc_email = annoyingBug(email, 1, config)
         if not email:
             return jsonify({'message': 'Invalid input data'}), 400
         cursor = connection.cursor()
-        # print("ENCRYPTED EMAIL: ", enc_email)
         cursor.execute("INSERT INTO flutter_users (email) VALUES (%s)", (email,))
         connection.commit()
-        # result = cursor.fetchone()
         recruitRoaches(email, config)
         return jsonify({'result': "ok"}), 201
     except Exception as error:
         print('Error', error)
         print(traceback.format_exc())
-        connection.rollback()
         if ("duplicate key value" in str(error) and "Key (email)" in str(error)):
-            return jsonify({'message': 'User already registered'}), 500
+            connection.rollback()
+            cursor.execute("SELECT verified FROM flutter_users WHERE email = %s", (email,))
+            
+            response = cursor.fetchone()
+            print(response)
+
+            if response["verified"] == False:
+                recruitRoaches(email, config)
+                return jsonify({'result': "ok"}), 201
+            else:
+                return jsonify({'message': 'User already registered'}), 500
+        
+
         else:
             return jsonify({'message': 'Internal server error'}), 500
+        
     finally:
         if 'cursor' in locals():
             cursor.close()
@@ -108,20 +116,77 @@ def registration():
         token = data.get('token')
         name = data.get('name')
         email = data.get('email')
-        if email != recruiterVerification(token):
+        if email != recruiterVerification(token, config):
             return jsonify({'message': 'Invalid token'}), 403
-        password = data.get('password')
+        password = data.get('password') + config["ROACH_KING"]
         password_hash = generate_password_hash(password)
+        print("PASSWORD HASH: ", password_hash)
         if not email or not name or not password:
             return jsonify({'message': 'Invalid input data'}), 400
         cursor = connection.cursor()
-        cursor.execute("UPDATE flutter_users SET name = %s, password = %s, WHERE email = %s", (name, password_hash, email))
+        cursor.execute("UPDATE flutter_users SET name = %s, password = %s WHERE email = %s RETURNING *", (name, password_hash, email))
         
         connection.commit()
         result = cursor.fetchone()
+        del result['password']
+        return jsonify({'result': result}), 201
+    except Exception as error:
+        print('Error', error)
+        print(traceback.format_exc())
+        return jsonify({'message': 'Internal server error'}), 500
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+
+@app.route('/subscribe', methods=['POST'])
+def subscribe():
+    try:
+        data = request.json
+        email = data.get('email')
+        subscription_type = data.get('subscription_type')
+        if not email:
+            return jsonify({'message': 'Invalid input data'}), 400
+        cursor = connection.cursor()
+        cursor.execute("UPDATE flutter_users SET subscription_type = %s WHERE email = %s", (subscription_type, email))
+        
+        connection.commit()
+        # result = cursor.fetchone()
         return jsonify({'result': 'ok'}), 201
     except Exception as error:
         print('Error', error)
+        print(traceback.format_exc())
+        return jsonify({'message': 'Internal server error'}), 500
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+
+@app.route('/login', methods=['POST'])
+def login():
+    try:
+        data = request.json
+        email = data.get('email')
+        password = data.get('password')
+        if not email or not password:
+            return jsonify({'message': 'Invalid input data'}), 400
+        cursor = connection.cursor()
+        cursor.execute("SELECT * from flutter_users WHERE email = %s", (email,))
+        connection.commit()
+        result = cursor.fetchone()
+        if result:
+            print("RESULT: ", result)
+            password_hash = result["password"] 
+
+            if check_password_hash(password_hash, password+config["ROACH_KING"]):
+                reply = result
+                del reply["password"]
+                return jsonify({'result': reply}), HTTPStatus.OK.value
+            else:
+                return jsonify({'message': 'Invalid credentials'}), 403
+        else:
+            return jsonify({'message': 'Not a registered user'}), HTTPStatus.NOT_FOUND.value
+    except Exception as error:
+        print('Error', error)
+        print(traceback.format_exc())
         return jsonify({'message': 'Internal server error'}), 500
     finally:
         if 'cursor' in locals():

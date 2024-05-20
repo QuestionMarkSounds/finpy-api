@@ -12,7 +12,6 @@ def annoyingBug(roach, mode, config):
     elif mode == 3:
         majorRoach = config["ROACH_KING"]
     
-    # fernet = Fernet(base64.urlsafe_b64encode(config["YABADABADOO"].encode('utf-8')))
     aes = AESCipher(config["YABADABADOO"], config["MUTATION"])
     
     annoyingBug = roach + majorRoach

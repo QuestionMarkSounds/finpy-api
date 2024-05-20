@@ -20,8 +20,6 @@ def recruitRoaches(email, config):
         algorithm='RS256'
     )
 
-
-    # print(config)
     subject = "Verify your email address"
     body = "Please click on the following link to verify your email address: http://localhost:63621/verifyEmail?token="+new_token
     sender = config["ROACH_RECRUITER"]
