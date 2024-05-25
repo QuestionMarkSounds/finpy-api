@@ -8,7 +8,7 @@ import traceback
 import stripe
 from werkzeug.security import check_password_hash, generate_password_hash
 from dotenv import dotenv_values
-from infestation_manager import annoyingBug, bugSpray
+
 from roach_recruitment import recruiterVerification, recruitRoaches
 from http import HTTPStatus
 from stripe_server import session_request, customer_portal
@@ -363,34 +363,6 @@ def login():
         if 'cursor' in locals():
             cursor.close()
 
-@app.route('/infest', methods=['POST'])
-def infest():
-    try:
-        data = request.json
-        name = annoyingBug(data.get('name'), 0, config)
-        email = annoyingBug(data.get('email'), 1, config)
-        subscription_type = data.get('subscription_type')
-        password = annoyingBug(data.get('password'), 2, config)
-        verified = data.get('verified')
-        platform = data.get('platform')
-        if not email or not subscription_type or not platform:
-            return jsonify({'message': 'Invalid input data'}), 400
-        cursor = connection.cursor()
-        cursor.execute("INSERT INTO flutter_users (name, email, subscription_type, password, verified, platform) VALUES (%s, %s, %s, %s,%s, %s)", (name, email, subscription_type, password, verified, platform))
-        connection.commit()
-        # result = cursor.fetchone()
-        return jsonify({'result': "ok"}), 201
-    except Exception as error:
-        print('Error', error)
-        connection.rollback()
-        if ("duplicate key value" in str(error) and "Key (email)" in str(error)):
-            return jsonify({'message': 'User already registered'}), 500
-        else:
-            return jsonify({'message': 'Internal server error'}), 500
-    finally:
-        if 'cursor' in locals():
-            cursor.close()
-
 
 def get_stripe_customer(email):
     try:
@@ -449,84 +421,8 @@ def set_stripe_subscription(customer_id, subscription_type):
         if 'cursor' in locals():
             cursor.close()
 
-@app.route('/locate', methods=['POST'])
-def locate():
-    try:
-        data = request.json
-        email = annoyingBug(data.get('email'), 1, config)
-        password = annoyingBug(data.get('password'), 2, config)
-        if not email or not password:
-            return jsonify({'message': 'Invalid input data'}), 400
-        cursor = connection.cursor()
-        cursor.execute("SELECT COUNT(*) > 0 AS row_exists FROM your_table_name WHERE name = %s AND password = %s", (email,  password))
-        connection.commit()
-        result = cursor.fetchone()
-        if result['row_exists'] == True:
-            return jsonify({'result': "ok"}), 201
-        else: 
-            raise(Exception("Invalid credentials"))
-    except Exception as error:
-        print('Error', error)
-        connection.rollback()
-        if ("Invalid credentials" in str(error)):
-            return jsonify({'message': 'Invalid credentials'}), 403
-        else:
-            return jsonify({'message': 'Internal server error'}), 500
-    finally:
-        if 'cursor' in locals():
-            cursor.close()
 
-@app.route('/locate', methods=['POST'])
-def locate_jwt():
-    try:
-        data = request.json
-        email = annoyingBug(data.get('email'), 1, config)
-        password = annoyingBug(data.get('password'), 2, config)
-        if not email or not password:
-            return jsonify({'message': 'Invalid input data'}), 400
-        cursor = connection.cursor()
-        cursor.execute("SELECT COUNT(*) > 0 AS row_exists FROM your_table_name WHERE name = %s AND password = %s", (email,  password))
-        connection.commit()
-        result = cursor.fetchone()
-        if result['row_exists'] == True:
-            return jsonify({'result': "ok"}), 201
-        else: 
-            raise(Exception("Invalid credentials"))
-    except Exception as error:
-        print('Error', error)
-        connection.rollback()
-        if ("Invalid credentials" in str(error)):
-            return jsonify({'message': 'Invalid credentials'}), 403
-        else:
-            return jsonify({'message': 'Internal server error'}), 500
-    finally:
-        if 'cursor' in locals():
-            cursor.close()
 
-@app.route('/breed', methods=['POST'])
-def breed():
-    try:
-        data = request.json
-        name = annoyingBug(data.get('name'), 0, config)
-        email = annoyingBug(data.get('email'), 1, config)
-        subscription_type = data.get('subscription_type')
-        password = annoyingBug(data.get('password'), 2, config)
-        verified = data.get('verified')
-        platform = data.get('platform')
-        if not email or not subscription_type or not platform:
-            return jsonify({'message': 'Invalid input data'}), 400
-        cursor = connection.cursor()
-        cursor.execute("UPDATE flutter_users SET name = %s, subscription_type = %s, password = %s, verified = %s, platform = %s WHERE email = %s", (name, subscription_type, password, verified, platform, email))
-        
-        connection.commit()
-        result = cursor.fetchone()
-        return jsonify({'author': result}), 201
-    except Exception as error:
-        print('Error', error)
-        return jsonify({'message': 'Internal server error'}), 500
-    finally:
-        if 'cursor' in locals():
-            cursor.close()
 
 @app.route('/books')
 def get_books():    
