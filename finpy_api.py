@@ -1,13 +1,18 @@
-from flask import Flask, jsonify, request
+import json
+import os
+from flask import Blueprint, Flask, jsonify, request
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import atexit
 import traceback
+import stripe
 from werkzeug.security import check_password_hash, generate_password_hash
 from dotenv import dotenv_values
 from infestation_manager import annoyingBug, bugSpray
 from roach_recruitment import recruiterVerification, recruitRoaches
 from http import HTTPStatus
+from stripe_server import session_request, customer_portal
+from stripe_utils import get_product_from_subscription, Subscription
 
 try:
     config = dotenv_values(".env")
@@ -23,8 +28,124 @@ try:
 except Exception as error:
     print('Database connection error:', str(error))
 
+
 app = Flask(__name__)
 port = 7341
+
+# @app.after_request
+# def add_header(response):
+#     print("B")
+#     response.headers['Content-Security-Policy'] = "default-src 'self'; style-src 'self' 'unsafe-inline';"
+#     return response
+
+
+
+
+# Setup Stripe python client library
+# For sample support and debugging, not required for production:
+stripe.set_app_info(
+    'stripe-samples/checkout-single-subscription',
+    version='0.0.1',
+    url='https://github.com/stripe-samples/checkout-single-subscription')
+
+# stripe.api_version = '2020-08-27'
+stripe.api_key = config['STRIPE_SECRET_KEY']
+
+
+
+# @app.route('/', methods=['GET'])
+# def get_example():
+#     return render_template('index.html')
+
+
+@app.route('/pconfig', methods=['GET'])
+def get_publishable_key():
+    return jsonify({
+        'publishableKey': config['STRIPE_PUB_KEY'],
+        'basicPrice': config['BASIC_PRICE_ID'],
+        'proPrice': config['PREMIUM_PRICE_ID']
+    })
+
+
+# Fetch the Checkout Session to display the JSON result on the success page
+@app.route('/checkout-session', methods=['GET'])
+def get_checkout_session():
+    id = request.args.get('sessionId')
+    checkout_session = stripe.checkout.Session.retrieve(id)
+    return jsonify(checkout_session)
+
+
+@app.route('/create-checkout-session', methods=['POST'])
+def create_checkout_session():
+    data = request.json
+    email = data.get('email')
+    price = data.get('priceId')
+    domain_url = data.get('redirectUri')
+    user_intent = data.get('userIntent')
+    try:
+        customer_id_response = get_stripe_customer(email)
+        print(customer_id_response)
+        if "customerId" not in  customer_id_response.keys():
+            raise Exception(customer_id_response['message'])
+        else:
+            if user_intent == "portal":
+                customer_portal(customer_id_response["sessionId"])
+            elif user_intent == "subscription":
+                print("----sID-----")
+                print(customer_id_response["customerId"])
+                final_response = session_request(None, domain_url, price, email)
+                print(final_response)
+                if "sessionId" in final_response.keys():
+                    # set_stripe_customer(email, final_response["sessionId"])
+                    del final_response['sessionId']
+                return jsonify(final_response), 303 
+            else:
+                raise Exception("Invalid user intent")
+        
+    except Exception as e:
+        print(e)
+        print(traceback.format_exc())
+        return jsonify({'error': {'message': str(e)}}), 400
+    
+@app.route('/webhook', methods=['POST'])
+def webhook_received():
+    # You can use webhooks to receive information about asynchronous payment events.
+    # For more about our webhook events check out https://stripe.com/docs/webhooks.
+    webhook_secret = os.getenv('STRIPE_WEBHOOK_SECRET')
+    request_data = json.loads(request.data)
+
+    if webhook_secret:
+        # Retrieve the event by verifying the signature using the raw body and secret if webhook signing is configured.
+        signature = request.headers.get('stripe-signature')
+        try:
+            event = stripe.Webhook.construct_event(
+                payload=request.data, sig_header=signature, secret=webhook_secret)
+            data = event['data']
+        except Exception as e:
+            return e
+        # Get the type of webhook event sent - used to check the status of PaymentIntents.
+        event_type = event['type']
+    else:
+        data = request_data['data']
+        event_type = request_data['type']
+    data_object = data['object']
+    
+    # print('WH event ' + event_type)
+
+    if event_type == 'checkout.session.completed':
+        json_subscription = stripe.Subscription.list(customer = data_object['customer'])
+        product_id = get_product_from_subscription(json_subscription)
+        
+        subscription_tier = Subscription.name_from_id(product_id)
+        print('🔔 Payment succeeded!')
+        # print(json_subscription)
+        print("------------------")
+        set_stripe_customer(data_object['customer_email'], data_object['customer'], subscription_tier)
+        # print(request_data)
+        print("------------------")
+        # print(data)
+
+    return jsonify({'status': 'success'}), 200
 
 @app.route('/')
 def hello_world():
@@ -216,6 +337,46 @@ def infest():
             return jsonify({'message': 'User already registered'}), 500
         else:
             return jsonify({'message': 'Internal server error'}), 500
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+
+
+def get_stripe_customer(email):
+    try:
+        if not email:
+            return {'message': 'Invalid input data'}
+        cursor = connection.cursor()
+        cursor.execute("SELECT customer_id from flutter_users WHERE email = %s", (email,))
+        connection.commit()
+        result = cursor.fetchone()
+        if result:
+            print("RESULT: ", result)
+            return {'customerId': result["customer_id"]}	
+        else: 
+            return {'customerId': None}	
+    except Exception as error:
+        print('Error', error)
+        print(traceback.format_exc())
+        return {'message': 'Internal server error'}
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+
+def set_stripe_customer(email, customer_id, subscription_type):
+    try:
+        if not email:
+            return jsonify({'message': 'Invalid input data'}), 400
+        cursor = connection.cursor()
+        cursor.execute("UPDATE flutter_users SET customer_id = %s, subscription_type = %s WHERE email = %s", (customer_id, subscription_type, email,))
+        connection.commit()
+        # print("PUSHED STRIPE SESSION: ", stripe_session)	
+        return {'result': "ok"}
+
+    except Exception as error:
+        print('Error', error)
+        print(traceback.format_exc())
+        return {'message': 'Internal server error'}
     finally:
         if 'cursor' in locals():
             cursor.close()
