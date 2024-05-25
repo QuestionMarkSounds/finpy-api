@@ -74,6 +74,25 @@ def get_checkout_session():
     checkout_session = stripe.checkout.Session.retrieve(id)
     return jsonify(checkout_session)
 
+@app.route('/customer-portal', methods=['POST'])
+def get_customer_portal():
+    try:
+        data = request.json
+        email = data.get('email')
+        return_url = data.get('returnUrl')
+        customer_id = get_stripe_customer(email)
+        checkout_session = stripe.billing_portal.Session.create(
+            customer = customer_id["customerId"],
+            return_url = return_url
+
+        )
+        return jsonify({"redirect": checkout_session.url}), 201
+    
+    except Exception as e:
+        print(e)
+        print(traceback.format_exc())
+        return jsonify({'error': {'message': str(e)}}), 400
+
 
 @app.route('/create-checkout-session', methods=['POST'])
 def create_checkout_session():
@@ -131,7 +150,19 @@ def webhook_received():
     data_object = data['object']
     
     # print('WH event ' + event_type)
+    if event_type == 'customer.subscription.updated':
+        json_subscription = stripe.Subscription.list(customer = data_object['customer'])
+        product_id = get_product_from_subscription(json_subscription)
+        subscription_tier = Subscription.name_from_id(product_id)
+        print(data_object)
+        set_stripe_subscription(data_object['customer'], subscription_tier)
 
+    if event_type == 'customer.subscription.deleted':
+        # json_subscription = stripe.Subscription.list(customer = data_object['customer'])
+        # product_id = get_product_from_subscription(json_subscription)
+        subscription_tier = "none"
+        set_stripe_subscription(data_object['customer'], subscription_tier)
+        
     if event_type == 'checkout.session.completed':
         json_subscription = stripe.Subscription.list(customer = data_object['customer'])
         product_id = get_product_from_subscription(json_subscription)
@@ -159,6 +190,25 @@ def get_infestants():
         cursor.execute("SELECT * FROM public.flutter_users")
         results = cursor.fetchall()
         return jsonify({'users': results})
+    except Exception as error:
+        print('Error', error)
+        print(traceback.format_exc())
+        return jsonify({'message': 'Internal server error'}), 500
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+
+@app.route('/user', methods=['POST'])
+def load_user_data():
+    data = request.json
+    email = data.get('email')
+    try:
+        cursor = connection.cursor()
+        cursor.execute("SELECT * FROM public.flutter_users WHERE email = %s", (email,))
+        result = cursor.fetchone()
+        del result["password"]
+        print(result)
+        return jsonify({'user': result}), 201
     except Exception as error:
         print('Error', error)
         print(traceback.format_exc())
@@ -369,6 +419,24 @@ def set_stripe_customer(email, customer_id, subscription_type):
             return jsonify({'message': 'Invalid input data'}), 400
         cursor = connection.cursor()
         cursor.execute("UPDATE flutter_users SET customer_id = %s, subscription_type = %s WHERE email = %s", (customer_id, subscription_type, email,))
+        connection.commit()
+        # print("PUSHED STRIPE SESSION: ", stripe_session)	
+        return {'result': "ok"}
+
+    except Exception as error:
+        print('Error', error)
+        print(traceback.format_exc())
+        return {'message': 'Internal server error'}
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+
+def set_stripe_subscription(customer_id, subscription_type):
+    try:
+        if not customer_id:
+            return jsonify({'message': 'Invalid input data'}), 400
+        cursor = connection.cursor()
+        cursor.execute("UPDATE flutter_users SET  subscription_type = %s WHERE customer_id = %s", ( subscription_type, customer_id,))
         connection.commit()
         # print("PUSHED STRIPE SESSION: ", stripe_session)	
         return {'result': "ok"}
