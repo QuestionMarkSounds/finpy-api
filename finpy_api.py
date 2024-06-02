@@ -1,3 +1,4 @@
+import datetime
 import json
 import os
 from flask import Blueprint, Flask, jsonify, request
@@ -9,7 +10,9 @@ import stripe
 from werkzeug.security import check_password_hash, generate_password_hash
 from dotenv import dotenv_values
 
-from roach_recruitment import recruiterVerification, recruitRoaches
+from apscheduler.schedulers.background import BackgroundScheduler
+
+from roach_recruitment import decodeResetToken, notify_about_email_change, recruiterVerification, recruitRoaches, resetLink, send_email
 from http import HTTPStatus
 from stripe_server import session_request, customer_portal
 from stripe_utils import get_product_from_subscription, Subscription
@@ -57,6 +60,25 @@ stripe.api_key = config['STRIPE_SECRET_KEY']
 # def get_example():
 #     return render_template('index.html')
 
+
+def delete_old_rows():
+    # Connect to the database
+    cur = connection.cursor()
+    # Define the time threshold (one hour ago)
+    threshold = datetime.datetime.now() - datetime.timedelta(hours=1)
+
+    # Execute the deletion query
+    cur.execute("DELETE FROM flutter_dumpster WHERE created_at < %s", (threshold,))
+
+    # Commit the transaction
+    connection.commit()
+    print("DUMPSTER TRUCK: Deleted old rows")	
+    # Close the cursor and connection
+    cur.close()
+ 
+scheduler = BackgroundScheduler()
+scheduler.add_job(delete_old_rows, 'interval', hours=1)  # Run every hour
+scheduler.start()
 
 @app.route('/pconfig', methods=['GET'])
 def get_publishable_key():
@@ -182,7 +204,6 @@ def webhook_received():
 def hello_world():
     return 'Hello world!'
 
-
 @app.route('/infestants')
 def get_infestants():
     try:
@@ -243,6 +264,32 @@ def jwt_verification():
         if 'cursor' in locals():
             cursor.close()
 
+# @app.route('/reset-password', methods=['POST'])
+# def jwt_reset_password():
+#     try:
+#         data = request.json
+#         # print(data.get('email'))
+#         jwt = data.get('token')
+#         email = recruiterVerification(jwt, config)
+#         print("JWT VERIFIED EMAIL: ", email)
+#         cursor = connection.cursor()
+#         cursor.execute("SELECT * FROM public.flutter_users WHERE email = %s", (email,))
+#         response = cursor.fetchall()
+#         results = jsonify({"results": response})
+#         print(results)
+#         if response[0]["verified"] == "true":
+#             return jsonify({'message': 'User already verified'}), 409
+#         else:
+#             cursor.execute("UPDATE public.flutter_users SET verified = 'true' WHERE email = %s", (email,))
+#             return jsonify({'message': 'Accepted'}), 202
+#     except Exception as error:
+#         print('Error', error)
+#         print(traceback.format_exc())
+#         return jsonify({'message': 'Internal server error'}), 500
+#     finally:
+#         if 'cursor' in locals():
+#             cursor.close()
+
 @app.route('/guest', methods=['POST'])
 def unverified_guest():
     try:
@@ -275,6 +322,189 @@ def unverified_guest():
 
         else:
             return jsonify({'message': 'Internal server error'}), 500
+        
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+
+
+@app.route('/change-email', methods=['POST'])
+def change_email():
+    try:
+        data = request.json
+        email = data.get('email')
+        print("Email: ", email)
+        if not email:
+            return jsonify({'message': 'Invalid input data'}), 400
+        cursor = connection.cursor()
+        cursor.execute("SELECT * FROM flutter_users WHERE email = %s"	, (email,))
+        connection.commit()
+        response = cursor.fetchone()
+        print(response)
+        if (response):
+            token = resetLink(email, response["name"], "changeEmail", config)
+            cursor.execute("INSERT INTO flutter_dumpster (data) VALUES (%s)", (token,))
+
+            connection.commit()
+            print("Token in: ", token)
+            return jsonify({'result': "ok"}), 201
+        else:
+            return jsonify({'message': 'User not found'}), 403
+    except Exception as error:
+        print('Error', error)
+        return jsonify({'message': error}), 500
+        
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+
+@app.route('/validate-change-email-token', methods=['POST'])
+def validate_change_email_token():
+    try:
+        data = request.json
+        token = data.get('token')
+        print("Token: ", token, "Length: ", len(token))
+        if not token:
+            return jsonify({'message': 'Invalid input data'}), 400
+        cursor = connection.cursor()
+        cursor.execute("SELECT * FROM flutter_dumpster WHERE data = %s"	, (token,))
+        connection.commit()
+        response = cursor.fetchone()
+        if (response):
+            email, exp = decodeResetToken(token, config)
+            if datetime.datetime.utcnow() > datetime.datetime.utcfromtimestamp(exp):
+                return jsonify({'message': 'Token expired'}), 403
+            else:
+                return jsonify({'result': "ok"}), 201
+        else:
+            return jsonify({'message': 'Invalid token'}), 403
+    except Exception as error:
+        print('Error', error)
+        return jsonify({'message': error}), 500
+        
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+
+@app.route('/complete-email-reset', methods=['POST'])
+def complete_email_reset():
+    try:
+        data = request.json
+        token = data.get('token')
+        new_email = data.get('email')
+        if not token or not new_email:
+            return jsonify({'message': 'Invalid input data'}), 400
+        cursor = connection.cursor()
+        cursor.execute("SELECT * FROM flutter_dumpster WHERE data = %s"	, (token,))
+        connection.commit()
+        response = cursor.fetchone()
+        if (response):
+            email, exp = decodeResetToken(token, config)
+            if datetime.datetime.utcnow() > datetime.datetime.utcfromtimestamp(exp):
+                print("Expired token")
+                return jsonify({'message': 'Token expired'}), 403
+            else:
+                cursor.execute("UPDATE flutter_users SET  email = %s WHERE email = %s RETURNING *", (new_email, email))
+                notify_about_email_change(email, new_email, response["name"], config)
+                connection.commit()
+                return jsonify({'result': "ok"}), 201
+        else:
+            print("Invalid token")
+            return jsonify({'message': 'Invalid token'}), 403
+    except Exception as error:
+        print('Error', error)
+        return jsonify({'message': error}), 500
+        
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+
+@app.route('/password-reset', methods=['POST'])
+def password_reset():
+    try:
+        data = request.json
+        email = data.get('email')
+        print("Email: ", email)
+        if not email:
+            return jsonify({'message': 'Invalid input data'}), 400
+        cursor = connection.cursor()
+        cursor.execute("SELECT * FROM flutter_users WHERE email = %s"	, (email,))
+        connection.commit()
+        response = cursor.fetchone()
+        print(response)
+        if (response):
+            token = resetLink(email, response["name"], "resetLink", config)
+            cursor.execute("INSERT INTO flutter_dumpster (data) VALUES (%s)", (token,))
+
+            connection.commit()
+            print("Token in: ", token)
+            return jsonify({'result': "ok"}), 201
+        else:
+            return jsonify({'message': 'User not found'}), 403
+    except Exception as error:
+        print('Error', error)
+        return jsonify({'message': error}), 500
+        
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+
+@app.route('/validate-password-reset-token', methods=['POST'])
+def validate_password_reset_token():
+    try:
+        data = request.json
+        token = data.get('token')
+        print("Token: ", token, "Length: ", len(token))
+        if not token:
+            return jsonify({'message': 'Invalid input data'}), 400
+        cursor = connection.cursor()
+        cursor.execute("SELECT * FROM flutter_dumpster WHERE data = %s"	, (token,))
+        connection.commit()
+        response = cursor.fetchone()
+        if (response):
+            email, exp = decodeResetToken(token, config)
+            if datetime.datetime.utcnow() > datetime.datetime.utcfromtimestamp(exp):
+                return jsonify({'message': 'Token expired'}), 403
+            else:
+                return jsonify({'result': "ok"}), 201
+        else:
+            return jsonify({'message': 'Invalid token'}), 403
+    except Exception as error:
+        print('Error', error)
+        return jsonify({'message': error}), 500
+        
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+
+@app.route('/complete-password-reset', methods=['POST'])
+def complete_password_reset():
+    try:
+        data = request.json
+        token = data.get('token')
+        password = data.get('password') + config["ROACH_KING"]
+        password_hash = generate_password_hash(password)
+        if not token or not password:
+            return jsonify({'message': 'Invalid input data'}), 400
+        cursor = connection.cursor()
+        cursor.execute("SELECT * FROM flutter_dumpster WHERE data = %s"	, (token,))
+        connection.commit()
+        response = cursor.fetchone()
+        if (response):
+            email, exp = decodeResetToken(token, config)
+            if datetime.datetime.utcnow() > datetime.datetime.utcfromtimestamp(exp):
+                print("Expired token")
+                return jsonify({'message': 'Token expired'}), 403
+            else:
+                cursor.execute("UPDATE flutter_users SET  password = %s WHERE email = %s RETURNING *", (password_hash, email))
+                connection.commit()
+                return jsonify({'result': "ok"}), 201
+        else:
+            print("Invalid token")
+            return jsonify({'message': 'Invalid token'}), 403
+    except Exception as error:
+        print('Error', error)
+        return jsonify({'message': error}), 500
         
     finally:
         if 'cursor' in locals():

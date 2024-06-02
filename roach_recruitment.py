@@ -1,3 +1,4 @@
+import datetime
 import smtplib
 from email.mime.text import MIMEText
 from dotenv import dotenv_values, load_dotenv
@@ -29,6 +30,58 @@ def recruitRoaches(email, config):
     send_email(subject, body, sender, recipients, password)
 
 
+def resetLink(email, name, reason, config):
+    payload_data = {
+        "email": email+config["ROACH_PRINCESS"],
+        "reason": reason,
+        "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1) 
+    }
+    new_token = jwt.encode(
+        payload=payload_data,
+        key=key,
+        algorithm='RS256'
+    )
+
+    subject = "Fintelligence Password reset"
+    body = f"Hi {name}! Please click on the following link to reset your password: http://localhost:63621/resetPassword?token="+new_token
+    sender = config["ROACH_RECRUITER"]
+    recipients = [email]
+    password = config["ROACH_CRY"]
+
+    send_email(subject, body, sender, recipients, password)
+    return new_token
+
+def changeEmailLink(email, name, reason, config):
+    payload_data = {
+        "email": email+config["ROACH_PRINCESS"],
+        "reason": reason,
+        "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1) 
+    }
+    new_token = jwt.encode(
+        payload=payload_data,
+        key=key,
+        algorithm='RS256'
+    )
+
+    subject = "Fintelligence Email reset"
+    body = f"Hi {name}! Please click on the following link to change your email adress: http://localhost:63621/changeEmail?token="+new_token
+    sender = config["ROACH_RECRUITER"]
+    recipients = [email]
+    password = config["ROACH_CRY"]
+
+    send_email(subject, body, sender, recipients, password)
+    return new_token
+
+def notify_about_email_change(email, new_email, name, config):
+    subject = "Fintelligence Email change"
+    body = f"Hi {name}! Your email has changed. You can now log in with your new email: {new_email}"
+    sender = config["ROACH_RECRUITER"]
+    recipients = [email]
+    password = config["ROACH_CRY"]
+
+    send_email(subject, body, sender, recipients, password)
+
+
 def send_email(subject, body, sender, recipients, password):
     msg = MIMEText(body)
     msg['Subject'] = subject
@@ -51,3 +104,17 @@ def recruiterVerification(token, config):
         return payload["email"].replace(config["ROACH_PRINCESS"], "")
     except ExpiredSignatureError as error:
         print(f'Unable to decode the token, error: {error}')
+
+def decodeResetToken(token, config):
+    header_data = jwt.get_unverified_header(token)
+    try:
+        payload = jwt.decode(
+            token,
+            key=key.public_key(),
+            algorithms=[header_data['alg'], ]
+        )
+        print("Payload: ", payload)
+        return payload["email"].replace(config["ROACH_PRINCESS"], ""), payload["exp"]
+    except ExpiredSignatureError as error:
+        print(f'Unable to decode the token, error: {error}')
+
