@@ -12,7 +12,7 @@ from dotenv import dotenv_values
 
 from apscheduler.schedulers.background import BackgroundScheduler
 
-from roach_recruitment import decodeResetToken, notify_about_email_change, recruiterVerification, recruitRoaches, resetLink, send_email
+from roach_recruitment import changeEmailLink, decodeChangeEmailToken, decodeResetToken, notify_about_email_change, recruiterVerification, recruitRoaches, resetLink, send_email
 from http import HTTPStatus
 from stripe_server import session_request, customer_portal
 from stripe_utils import get_product_from_subscription, Subscription
@@ -332,19 +332,30 @@ def unverified_guest():
 def change_email():
     try:
         data = request.json
-        email = data.get('email')
-        print("Email: ", email)
-        if not email:
+        old_email = data.get('email')
+        new_email = data.get('new_email')
+        password = data.get('password')
+        # print("Email: ", email)
+        if not old_email or not new_email or not password:
             return jsonify({'message': 'Invalid input data'}), 400
         cursor = connection.cursor()
+        cursor.execute("SELECT * FROM flutter_users WHERE email = %s"	, (new_email,))
+        connection.commit()
+        response = cursor.fetchone()
+        if (response):
+            return jsonify({'message': 'New email already in use'}), 403
         cursor.execute("SELECT * FROM flutter_users WHERE email = %s"	, (email,))
         connection.commit()
         response = cursor.fetchone()
         print(response)
         if (response):
-            token = resetLink(email, response["name"], "changeEmail", config)
-            cursor.execute("INSERT INTO flutter_dumpster (data) VALUES (%s)", (token,))
+            password_hash = response["password"] 
 
+            if not check_password_hash(password_hash, password+config["ROACH_KING"]):
+                return jsonify({'message': 'Invalid credentials'}), 403
+
+            token = changeEmailLink(old_email, new_email, response["name"], "changeEmail", config)
+            cursor.execute("INSERT INTO flutter_dumpster (data) VALUES (%s)", (token,))
             connection.commit()
             print("Token in: ", token)
             return jsonify({'result': "ok"}), 201
@@ -371,10 +382,12 @@ def validate_change_email_token():
         connection.commit()
         response = cursor.fetchone()
         if (response):
-            email, exp = decodeResetToken(token, config)
+            old_email, new_email, exp = decodeChangeEmailToken(token, config)
             if datetime.datetime.utcnow() > datetime.datetime.utcfromtimestamp(exp):
                 return jsonify({'message': 'Token expired'}), 403
             else:
+                cursor.execute("UPDATE flutter_users SET email = %s WHERE email = %s"	, (new_email, old_email))
+                connection.commit()
                 return jsonify({'result': "ok"}), 201
         else:
             return jsonify({'message': 'Invalid token'}), 403

@@ -51,9 +51,10 @@ def resetLink(email, name, reason, config):
     send_email(subject, body, sender, recipients, password)
     return new_token
 
-def changeEmailLink(email, name, reason, config):
+def changeEmailLink(old_email, new_email, name, reason, config):
     payload_data = {
-        "email": email+config["ROACH_PRINCESS"],
+        "email": old_email+config["ROACH_PRINCESS"],
+        "new_email": new_email+config["ROACH_PRINCESS"],
         "reason": reason,
         "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1) 
     }
@@ -66,7 +67,7 @@ def changeEmailLink(email, name, reason, config):
     subject = "Fintelligence Email reset"
     body = f"Hi {name}! Please click on the following link to change your email adress: http://localhost:63621/changeEmail?token="+new_token
     sender = config["ROACH_RECRUITER"]
-    recipients = [email]
+    recipients = [new_email]
     password = config["ROACH_CRY"]
 
     send_email(subject, body, sender, recipients, password)
@@ -118,3 +119,15 @@ def decodeResetToken(token, config):
     except ExpiredSignatureError as error:
         print(f'Unable to decode the token, error: {error}')
 
+def decodeChangeEmailToken(token, config):
+    header_data = jwt.get_unverified_header(token)
+    try:
+        payload = jwt.decode(
+            token,
+            key=key.public_key(),
+            algorithms=[header_data['alg'], ]
+        )
+        print("Payload: ", payload)
+        return payload["email"].replace(config["ROACH_PRINCESS"], ""), payload["new_email"].replace(config["ROACH_PRINCESS"], ""), payload["exp"]
+    except ExpiredSignatureError as error:
+        print(f'Unable to decode the token, error: {error}')
