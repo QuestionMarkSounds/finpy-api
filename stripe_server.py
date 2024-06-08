@@ -106,7 +106,6 @@ def session_request(session_id, domain_url, price, email):
 
         )
         return {"redirect": checkout_session.url, "sessionId": checkout_session.id}
-        return jsonify({"redirect": checkout_session.url}), 303 
 
 def customer_portal(customer_id):
     # For demonstration purposes, we're using the Checkout session to retrieve the customer ID.
@@ -122,36 +121,6 @@ def customer_portal(customer_id):
     )
     return jsonify({"redirect": session.url}), 303 
 
-
-# @stripe_routes.route('/webhook', methods=['POST'])
-# def webhook_received():
-#     # You can use webhooks to receive information about asynchronous payment events.
-#     # For more about our webhook events check out https://stripe.com/docs/webhooks.
-#     webhook_secret = os.getenv('STRIPE_WEBHOOK_SECRET')
-#     request_data = json.loads(request.data)
-
-#     if webhook_secret:
-#         # Retrieve the event by verifying the signature using the raw body and secret if webhook signing is configured.
-#         signature = request.headers.get('stripe-signature')
-#         try:
-#             event = stripe.Webhook.construct_event(
-#                 payload=request.data, sig_header=signature, secret=webhook_secret)
-#             data = event['data']
-#         except Exception as e:
-#             return e
-#         # Get the type of webhook event sent - used to check the status of PaymentIntents.
-#         event_type = event['type']
-#     else:
-#         data = request_data['data']
-#         event_type = request_data['type']
-#     data_object = data['object']
-
-#     print('event ' + event_type)
-
-#     if event_type == 'checkout.session.completed':
-#         print('🔔 Payment succeeded!')
-
-#     return jsonify({'status': 'success'})
 
 
 
