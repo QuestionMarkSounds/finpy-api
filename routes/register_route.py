@@ -5,6 +5,8 @@ import traceback
 from flask import Blueprint, jsonify, request, current_app
 from werkzeug.security import check_password_hash, generate_password_hash
 from roach_recruitment import recruiterVerification
+from utils.jwt_utils import generate_session_token
+
 
 registration_bp = Blueprint('registration', __name__, template_folder='templates')
 
@@ -30,6 +32,8 @@ def registration():
         connection.commit()
         result = cursor.fetchone()
         del result['password']
+        token = generate_session_token(result, config)
+        result["token"] = token
         return jsonify({'result': result}), 201
     except Exception as error:
         print('Error', error)

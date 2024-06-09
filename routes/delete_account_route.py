@@ -1,0 +1,45 @@
+
+
+from http import HTTPStatus
+import traceback
+from flask import Blueprint, jsonify, request, current_app
+from werkzeug.security import check_password_hash, generate_password_hash
+from roach_recruitment import recruiterVerification
+from utils.jwt_utils import decode_session_token, generate_session_token
+from utils.jwt_utils import validate_request_with_token
+
+delete_account_bp = Blueprint('delete_account', __name__, template_folder='templates')
+
+@delete_account_bp.route('/delete-account', methods=['POST'])
+def delete_account():
+    try:
+        connection = current_app.config['connection']
+        config = current_app.config['config']
+    except TypeError as e:
+        print(f"fill: {current_app.config}, exception: {str(e)}")
+    data = request.json
+    email = data.get('email')
+    password = data.get('password')
+    session_token = data.get('sessionToken')
+    try:
+        token_payload = validate_request_with_token(session_token, email, config)
+    except Exception as e:
+        return jsonify({'message': str(e)}), 403
+    try:
+        cursor = connection.cursor()
+        cursor.execute("SELECT * FROM public.flutter_users WHERE email = %s", (token_payload["email"],))
+        result = cursor.fetchone()
+        if result:
+            print("RESULT: ", result)
+            password_hash = result["password"] 
+            if check_password_hash(password_hash, password+config["ROACH_KING"]):
+                cursor.execute("DELETE FROM public.flutter_users WHERE email = %s RETURNING *", (token_payload["email"],))
+                return jsonify({'result': 'account deleted'}), HTTPStatus.OK.value
+        return jsonify({'message': 'Invalid credentials'}), 403
+    except Exception as error:
+        print('Error', error)
+        print(traceback.format_exc())
+        return jsonify({'message': 'Internal server error'}), 500
+    finally:
+        if 'cursor' in locals():
+            cursor.close()

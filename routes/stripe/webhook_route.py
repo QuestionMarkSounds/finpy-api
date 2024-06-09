@@ -7,7 +7,7 @@ from flask import Blueprint, jsonify, request, current_app
 import stripe
 from werkzeug.security import check_password_hash, generate_password_hash
 from stripe_utils import get_product_from_subscription, Subscription
-from routes.stripe.stripe_customer import set_stripe_subscription
+from routes.stripe.stripe_customer import set_stripe_customer, set_stripe_subscription
 
 stripe_webhook_bp = Blueprint('stripe_webhook', __name__, template_folder='templates')
 
@@ -37,12 +37,22 @@ def webhook_received():
         event_type = request_data['type']
     data_object = data['object']
     
+
+    if event_type == 'customer.created':
+
+        print("||||||||||||||||||||||")
+        print(data)
+        data_object = data['object']
+        set_stripe_customer(data_object["email"], data_object["id"], connection)
+
+
     # print('WH event ' + event_type)
     if event_type == 'customer.subscription.updated':
         json_subscription = stripe.Subscription.list(customer = data_object['customer'])
         product_id = get_product_from_subscription(json_subscription)
         subscription_tier = Subscription.name_from_id(product_id)
-        print(data_object)
+        print("||||||||||||||||||||||")
+        print(data)
         set_stripe_subscription(data_object['customer'], subscription_tier, connection)
 
     if event_type == 'customer.subscription.deleted':
@@ -59,7 +69,7 @@ def webhook_received():
         print('🔔 Payment succeeded!')
         # print(json_subscription)
         print("------------------")
-        set_stripe_subscription(data_object['customer_email'], data_object['customer'], subscription_tier, connection)
+        set_stripe_subscription(data_object['customer'], subscription_tier, connection)
         # print(request_data)
         print("------------------")
         # print(data)

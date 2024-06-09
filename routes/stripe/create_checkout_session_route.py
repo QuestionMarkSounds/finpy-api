@@ -45,8 +45,8 @@ def create_checkout_session():
                 final_response = session_request(None, domain_url, price, email)
                 print(final_response)
                 if "sessionId" in final_response.keys():
-                    # set_stripe_customer(email, final_response["sessionId"])
                     del final_response['sessionId']
+                
                 return jsonify(final_response), 303 
             else:
                 raise Exception("Invalid user intent")
@@ -61,3 +61,4 @@ def get_checkout_session():
     id = request.args.get('sessionId')
     checkout_session = stripe.checkout.Session.retrieve(id)
     return jsonify(checkout_session)
+

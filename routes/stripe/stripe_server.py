@@ -45,7 +45,7 @@ def session_request(session_id, domain_url, price, email):
             }],
 
         )
-        return {"redirect": checkout_session.url, "sessionId": checkout_session.id}
+        return {"redirect": checkout_session.url, "sessionId": checkout_session.id, "customerId": checkout_session.customer}
 
 def customer_portal(customer_id):
     # For demonstration purposes, we're using the Checkout session to retrieve the customer ID.

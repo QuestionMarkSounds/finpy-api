@@ -61,6 +61,9 @@ app.register_blueprint(jwt_verification_bp, connection = connection, config = co
 from routes.guest_route import guest_bp
 app.register_blueprint(guest_bp, connection = connection, config = config)
 
+from routes.change_name_route import change_name_bp
+app.register_blueprint(change_name_bp, connection = connection, config = config)
+
 # CHANGE PASSWORD
 
 from routes.change_password.change_password_route import change_password_bp
@@ -85,6 +88,12 @@ app.register_blueprint(validate_change_email_token_bp, connection = connection, 
 
 from routes.change_email.complete_email_reset_route import complete_email_reset_bp
 app.register_blueprint(complete_email_reset_bp, connection = connection, config = config)
+
+# DELETE ACCOUNT
+
+from routes.delete_account_route import delete_account_bp
+app.register_blueprint(delete_account_bp, connection = connection, config = config)
+
 
 # STRIPE ROUTES
 
