@@ -61,7 +61,13 @@ def customer_portal(customer_id):
     )
     return jsonify({"redirect": session.url}), 303 
 
-
+def delete_customer_request(customer_id):
+    print("customer id: ", customer_id)
+    # if customer_id is None:
+    #     raise Exception("No customer id provided")
+    delete_request = stripe.Customer.delete(customer_id)
+    print("Deleted: ", delete_request.deleted)
+    return delete_request.deleted
 
 
 

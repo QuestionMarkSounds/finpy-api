@@ -31,7 +31,7 @@ def validate_password_reset_token():
             return jsonify({'message': 'Invalid token'}), 403
     except Exception as error:
         print('Error', error)
-        return jsonify({'message': error}), 500
+        return jsonify({'message': str(error)}), 500
         
     finally:
         if 'cursor' in locals():

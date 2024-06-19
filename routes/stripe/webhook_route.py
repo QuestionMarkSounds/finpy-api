@@ -56,8 +56,6 @@ def webhook_received():
         set_stripe_subscription(data_object['customer'], subscription_tier, connection)
 
     if event_type == 'customer.subscription.deleted':
-        # json_subscription = stripe.Subscription.list(customer = data_object['customer'])
-        # product_id = get_product_from_subscription(json_subscription)
         subscription_tier = "none"
         set_stripe_subscription(data_object['customer'], subscription_tier, connection)
         

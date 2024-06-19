@@ -1,5 +1,6 @@
 import traceback
 from flask import jsonify
+from routes.stripe.stripe_server import delete_customer_request
 
 
 def set_stripe_subscription(customer_id, subscription_type, connection):
@@ -10,6 +11,8 @@ def set_stripe_subscription(customer_id, subscription_type, connection):
         cursor.execute("UPDATE flutter_users SET  subscription_type = %s WHERE customer_id = %s", ( subscription_type, customer_id,))
         connection.commit()
         # print("PUSHED STRIPE SESSION: ", stripe_session)	
+        if (subscription_type == "none"):
+            delete_customer_request(customer_id)
         return {'result': "ok"}
 
     except Exception as error:

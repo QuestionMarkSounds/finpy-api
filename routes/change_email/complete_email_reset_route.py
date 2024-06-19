@@ -2,6 +2,7 @@ import datetime
 from http import HTTPStatus
 import traceback
 from flask import Blueprint, jsonify, request, current_app
+import stripe
 from werkzeug.security import check_password_hash, generate_password_hash
 from roach_recruitment import decodeResetToken, notify_about_email_change, recruiterVerification
 
@@ -29,7 +30,10 @@ def complete_email_reset():
                 return jsonify({'message': 'Token expired'}), 403
             else:
                 cursor.execute("UPDATE flutter_users SET  email = %s WHERE email = %s RETURNING *", (new_email, email))
+                
+                result = cursor.fetchone()
                 notify_about_email_change(email, new_email, response["name"], config)
+                stripe.Customer.modify(result["customer_id"], metadata = {"email":new_email})
                 connection.commit()
                 return jsonify({'result': "ok"}), 201
         else:

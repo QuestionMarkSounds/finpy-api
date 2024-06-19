@@ -3,6 +3,7 @@
 from http import HTTPStatus
 import traceback
 from flask import Blueprint, jsonify, request, current_app
+import stripe
 from werkzeug.security import check_password_hash, generate_password_hash
 from roach_recruitment import recruiterVerification
 from utils.jwt_utils import decode_session_token, generate_session_token
@@ -33,6 +34,7 @@ def change_name():
         token = generate_session_token(result, config)
         result["token"] = token
         print("USER INFO: ",result)
+        stripe.Customer.modify(result["customer_id"], metadata = {"name":name})
         return jsonify({'user': result}), 201
     except Exception as error:
         print('Error', error)

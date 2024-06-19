@@ -109,6 +109,25 @@ app.register_blueprint(stripe_customer_portal_bp, connection = connection, confi
 
 port = 7341
 
+from flask import url_for, current_app, redirect, request
+from routes.google.google_oauth2_route import OAuthSignIn
+@app.route('/authorize/<provider>')
+def oauth_authorize(provider):
+    # Flask-Login function
+    # print(url_for("index"))
+    oauth = OAuthSignIn.get_provider(provider)
+    return oauth.authorize()
+
+@app.route('/callback/<provider>')
+def oauth_callback(provider):
+    # if not current_user.is_anonymous():
+    #     return redirect(url_for('index'))
+    oauth = OAuthSignIn.get_provider(provider)
+    data = oauth.callback()
+    print("OAUTH CALLBACK")
+    print("-----------------------------")
+    print(data)
+    return jsonify({"message": "ok"}), 200
 
 # @app.after_request
 # def add_header(response):

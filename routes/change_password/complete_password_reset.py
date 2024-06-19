@@ -30,6 +30,7 @@ def complete_password_reset():
                 return jsonify({'message': 'Token expired'}), 403
             else:
                 cursor.execute("UPDATE flutter_users SET  password = %s WHERE email = %s RETURNING *", (password_hash, email))
+                cursor.execute("DELETE FROM flutter_dumpster WHERE data = %s"	, (token,))
                 connection.commit()
                 return jsonify({'result': "ok"}), 201
         else:
