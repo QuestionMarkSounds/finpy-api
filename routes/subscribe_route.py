@@ -25,7 +25,7 @@ def subscribe():
         # result = cursor.fetchone()
         return jsonify({'result': 'ok'}), 201
     except Exception as error:
-        print('Error', error)
+        print('Error [Subscribe]:', error)
         print(traceback.format_exc())
         return jsonify({'message': 'Internal server error'}), 500
     finally:

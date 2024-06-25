@@ -10,13 +10,12 @@ def set_stripe_subscription(customer_id, subscription_type, connection):
         cursor = connection.cursor()
         cursor.execute("UPDATE flutter_users SET  subscription_type = %s WHERE customer_id = %s", ( subscription_type, customer_id,))
         connection.commit()
-        # print("PUSHED STRIPE SESSION: ", stripe_session)	
         if (subscription_type == "none"):
             delete_customer_request(customer_id)
         return {'result': "ok"}
 
     except Exception as error:
-        print('Error', error)
+        print('Error [Stripe]:', error)
         print(traceback.format_exc())
         return {'message': 'Internal server error'}
     finally:
@@ -33,12 +32,12 @@ def get_stripe_customer(email, connection):
         connection.commit()
         result = cursor.fetchone()
         if result:
-            print("RESULT: ", result)
+            
             return {'customerId': result["customer_id"]}	
         else: 
             return {'customerId': None}	
     except Exception as error:
-        print('Error', error)
+        print('Error [Stripe]:', error)
         print(traceback.format_exc())
         return {'message': 'Internal server error'}
     finally:
@@ -55,14 +54,14 @@ def check_stripe_customer(customer_id, stripe_session, connection):
         connection.commit()
         result = cursor.fetchone()
         if result:
-            print("RESULT: ", result)
+            
             return {'customerId': result["customer_id"]}	
         else: 
             cursor.execute("UPDATE flutter_users SET customer_id = %s WHERE stripe_session = %s", (customer_id, stripe_session))
             connection.commit()
             return {'customerId': result["customer_id"]}	
     except Exception as error:
-        print('Error', error)
+        print('Error [Stripe]:', error)
         print(traceback.format_exc())
         return {'message': 'Internal server error'}
     finally:
@@ -78,7 +77,7 @@ def set_stripe_customer(email, customer_id, connection):
         connection.commit()
         return {'result': "ok"}	
     except Exception as error:
-        print('Error', error)
+        print('Error [Stripe]:', error)
         print(traceback.format_exc())
         return {'message': 'Internal server error'}
     finally:

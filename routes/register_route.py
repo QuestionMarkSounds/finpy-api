@@ -23,7 +23,6 @@ def registration():
             return jsonify({'message': 'Invalid token'}), 403
         password = data.get('password') + config["ROACH_KING"]
         password_hash = generate_password_hash(password)
-        print("PASSWORD HASH: ", password_hash)
         if not email or not name or not password:
             return jsonify({'message': 'Invalid input data'}), 400
         cursor = connection.cursor()
@@ -36,7 +35,7 @@ def registration():
         result["token"] = token
         return jsonify({'result': result}), 201
     except Exception as error:
-        print('Error', error)
+        print('Error [Registration]:', error)
         print(traceback.format_exc())
         return jsonify({'message': 'Internal server error'}), 500
     finally:

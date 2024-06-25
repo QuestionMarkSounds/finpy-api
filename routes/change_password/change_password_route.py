@@ -32,7 +32,7 @@ def change_password():
         connection.commit()
         result = cursor.fetchone()
         if result:
-            print("RESULT: ", result)
+            
             password_hash = result["password"] 
 
             if check_password_hash(password_hash, old_password+config["ROACH_KING"]):
@@ -54,7 +54,7 @@ def change_password():
         del result['password']
         return jsonify({'result': result}), HTTPStatus.OK.value
     except Exception as error:
-        print('Error', error)
+        print('Error [Change Password]:', error)
         print(traceback.format_exc())
         return jsonify({'message': 'Internal server error'}), 500
     finally:

@@ -23,7 +23,6 @@ def get_customer_portal():
         try:
             validate_request_with_token(session_token, email, config)
         except Exception as e:
-            print("Token error: ", e)
             return jsonify({'message': str(e)}), 403
 
         return_url = data.get('returnUrl')
@@ -36,6 +35,6 @@ def get_customer_portal():
         return jsonify({"redirect": checkout_session.url}), 201
     
     except Exception as e:
-        print(e)
+        print("Error [Stripe Customer Portal]:",e)
         print(traceback.format_exc())
         return jsonify({'error': {'message': str(e)}}), 400

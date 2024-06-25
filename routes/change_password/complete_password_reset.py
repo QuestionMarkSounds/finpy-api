@@ -26,7 +26,6 @@ def complete_password_reset():
         if (response):
             email, exp = decodeResetToken(token, config)
             if datetime.datetime.utcnow() > datetime.datetime.utcfromtimestamp(exp):
-                print("Expired token")
                 return jsonify({'message': 'Token expired'}), 403
             else:
                 cursor.execute("UPDATE flutter_users SET  password = %s WHERE email = %s RETURNING *", (password_hash, email))
@@ -34,10 +33,9 @@ def complete_password_reset():
                 connection.commit()
                 return jsonify({'result': "ok"}), 201
         else:
-            print("Invalid token")
             return jsonify({'message': 'Invalid token'}), 403
     except Exception as error:
-        print('Error', error)
+        print('Error [Complete Password Reset]:', error)
         return jsonify({'message': error}), 500
         
     finally:

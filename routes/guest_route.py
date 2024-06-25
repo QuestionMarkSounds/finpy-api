@@ -15,7 +15,7 @@ def unverified_guest():
     try:
         data = request.json
         email = data.get('email')
-        print("Email: ", email)
+        
         if not email:
             return jsonify({'message': 'Invalid input data'}), 400
         cursor = connection.cursor()
@@ -24,15 +24,12 @@ def unverified_guest():
         recruitRoaches(email, config)
         return jsonify({'result': "ok"}), 201
     except Exception as error:
-        print('Error', error)
+        print('Error [Guest]:', error)
         print(traceback.format_exc())
         if ("duplicate key value" in str(error) and "Key (email)" in str(error)):
             connection.rollback()
-            cursor.execute("SELECT verified FROM flutter_users WHERE email = %s", (email,))
-            
+            cursor.execute("SELECT verified FROM flutter_users WHERE email = %s", (email,))    
             response = cursor.fetchone()
-            print(response)
-
             if response["verified"] == False:
                 recruitRoaches(email, config)
                 return jsonify({'result': "ok"}), 201

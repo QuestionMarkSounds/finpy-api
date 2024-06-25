@@ -29,6 +29,14 @@ def recruitRoaches(email, config):
 
     send_email(subject, body, sender, recipients, password)
 
+def contactUsEmail(email, name, message, config):
+    subject = "Contact Us: {}".format(email)
+    body = "Contact Us Request: \n\nName: {}\nEmail: {}\n\nMessage: {}".format(name, email, message)
+    sender = config["ROACH_RECRUITER"]
+    recipients = [sender]
+    password = config["ROACH_CRY"]
+
+    send_email(subject, body, sender, recipients, password)
 
 def resetLink(email, name, reason, config):
     payload_data = {
@@ -91,7 +99,6 @@ def send_email(subject, body, sender, recipients, password):
     with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp_server:
        smtp_server.login(sender, password)
        smtp_server.sendmail(sender, recipients, msg.as_string())
-    print("Message sent!")
 
 def recruiterVerification(token, config):
     header_data = jwt.get_unverified_header(token)
@@ -101,7 +108,6 @@ def recruiterVerification(token, config):
             key=key.public_key(),
             algorithms=[header_data['alg'], ]
         )
-        print("Payload: ", payload)
         return payload["email"].replace(config["ROACH_PRINCESS"], "")
     except ExpiredSignatureError as error:
         print(f'Unable to decode the token, error: {error}')
@@ -114,7 +120,7 @@ def decodeResetToken(token, config):
             key=key.public_key(),
             algorithms=[header_data['alg'], ]
         )
-        print("Payload: ", payload)
+        
         return payload["email"].replace(config["ROACH_PRINCESS"], ""), payload["exp"]
     except ExpiredSignatureError as error:
         print(f'Unable to decode the token, error: {error}')
@@ -127,7 +133,7 @@ def decodeChangeEmailToken(token, config):
             key=key.public_key(),
             algorithms=[header_data['alg'], ]
         )
-        print("Payload: ", payload)
+        
         return payload["email"].replace(config["ROACH_PRINCESS"], ""), payload["new_email"].replace(config["ROACH_PRINCESS"], ""), payload["exp"]
     except ExpiredSignatureError as error:
         print(f'Unable to decode the token, error: {error}')

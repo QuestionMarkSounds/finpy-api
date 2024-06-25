@@ -19,9 +19,6 @@ def generate_session_token(user_info, config):
         "customer_id": user["customer_id"],
         "exp": datetime.datetime.utcnow() + datetime.timedelta(days=14) 
     }
-    # payload_data["exp"] = datetime.datetime.utcnow() + datetime.timedelta(hours=1)	
-    # payload_data["email"] = payload_data["email"] + config["ROACH_PRINCESS"]
-    print(payload_data)
     session_token = jwt.encode(
         payload=payload_data,
         key=key,
@@ -38,7 +35,7 @@ def decode_session_token(token, config):
             key=key.public_key(),
             algorithms=[header_data['alg'], ]
         )
-        print("Payload: ", payload)
+        
         payload["email"].replace(config["ROACH_PRINCESS"], "")
         return payload
     except jwt.ExpiredSignatureError as error:

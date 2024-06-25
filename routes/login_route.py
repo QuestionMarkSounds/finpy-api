@@ -23,7 +23,9 @@ def login():
         connection.commit()
         result = cursor.fetchone()
         if result:
-            print("RESULT: ", result)
+            
+            if result["platform"] != "none":
+                return jsonify({'message': 'User registered using different authentication method'}), 403
             password_hash = result["password"] 
 
             if check_password_hash(password_hash, password+config["ROACH_KING"]):
@@ -37,7 +39,7 @@ def login():
         else:
             return jsonify({'message': 'Not a registered user'}), HTTPStatus.NOT_FOUND.value
     except Exception as error:
-        print('Error', error)
+        print('Error [Login]:', error)
         print(traceback.format_exc())
         return jsonify({'message': 'Internal server error'}), 500
     finally:

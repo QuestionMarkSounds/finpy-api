@@ -12,11 +12,10 @@ user_bp = Blueprint('user', __name__, template_folder='templates')
 
 @user_bp.route('/user', methods=['POST'])
 def load_user_data():
-    try:
-        connection = current_app.config['connection']
-        config = current_app.config['config']
-    except TypeError as e:
-        print(f"fill: {current_app.config}, exception: {str(e)}")
+
+    connection = current_app.config['connection']
+    config = current_app.config['config']
+
     data = request.json
     email = data.get('email')
     session_token = data.get('sessionToken')
@@ -31,10 +30,9 @@ def load_user_data():
         del result["password"]
         token = generate_session_token(result, config)
         result["token"] = token
-        print("USER INFO: ",result)
         return jsonify({'user': result}), 201
     except Exception as error:
-        print('Error', error)
+        print('Error [Load Data]:', error)
         print(traceback.format_exc())
         return jsonify({'message': 'Internal server error'}), 500
     finally:

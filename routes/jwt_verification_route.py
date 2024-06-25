@@ -15,22 +15,19 @@ def jwt_verification():
     config = current_app.config['config']
     try:
         data = request.json
-        # print(data.get('email'))
         jwt = data.get('token')
         email = recruiterVerification(jwt, config)
-        print("JWT VERIFIED EMAIL: ", email)
         cursor = connection.cursor()
         cursor.execute("SELECT * FROM public.flutter_users WHERE email = %s", (email,))
         response = cursor.fetchall()
-        results = jsonify({"results": response})
-        print(results)
+
         if response[0]["verified"] == "true":
             return jsonify({'message': 'User already verified'}), 409
         else:
             cursor.execute("UPDATE public.flutter_users SET verified = 'true' WHERE email = %s", (email,))
             return jsonify({'message': 'Accepted'}), 202
     except Exception as error:
-        print('Error', error)
+        print('Error [JWT]:', error)
         print(traceback.format_exc())
         return jsonify({'message': 'Internal server error'}), 500
     finally:

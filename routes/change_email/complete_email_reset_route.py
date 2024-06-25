@@ -26,7 +26,6 @@ def complete_email_reset():
         if (response):
             email, exp = decodeResetToken(token, config)
             if datetime.datetime.utcnow() > datetime.datetime.utcfromtimestamp(exp):
-                print("Expired token")
                 return jsonify({'message': 'Token expired'}), 403
             else:
                 cursor.execute("UPDATE flutter_users SET  email = %s WHERE email = %s RETURNING *", (new_email, email))
@@ -37,10 +36,9 @@ def complete_email_reset():
                 connection.commit()
                 return jsonify({'result': "ok"}), 201
         else:
-            print("Invalid token")
             return jsonify({'message': 'Invalid token'}), 403
     except Exception as error:
-        print('Error', error)
+        print('Error [Complete Email Reset]:', error)
         return jsonify({'message': error}), 500
         
     finally:

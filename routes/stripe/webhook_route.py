@@ -39,20 +39,13 @@ def webhook_received():
     
 
     if event_type == 'customer.created':
-
-        print("||||||||||||||||||||||")
-        print(data)
         data_object = data['object']
         set_stripe_customer(data_object["email"], data_object["id"], connection)
 
-
-    # print('WH event ' + event_type)
     if event_type == 'customer.subscription.updated':
         json_subscription = stripe.Subscription.list(customer = data_object['customer'])
         product_id = get_product_from_subscription(json_subscription)
         subscription_tier = Subscription.name_from_id(product_id)
-        print("||||||||||||||||||||||")
-        print(data)
         set_stripe_subscription(data_object['customer'], subscription_tier, connection)
 
     if event_type == 'customer.subscription.deleted':
@@ -64,12 +57,7 @@ def webhook_received():
         product_id = get_product_from_subscription(json_subscription)
         
         subscription_tier = Subscription.name_from_id(product_id)
-        print('🔔 Payment succeeded!')
-        # print(json_subscription)
-        print("------------------")
         set_stripe_subscription(data_object['customer'], subscription_tier, connection)
-        # print(request_data)
-        print("------------------")
-        # print(data)
+
 
     return jsonify({'status': 'success'}), 200

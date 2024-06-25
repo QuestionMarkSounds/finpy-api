@@ -13,11 +13,8 @@ change_name_bp = Blueprint('change_name', __name__, template_folder='templates')
 
 @change_name_bp.route('/change-name', methods=['POST'])
 def change_name():
-    try:
-        connection = current_app.config['connection']
-        config = current_app.config['config']
-    except TypeError as e:
-        print(f"fill: {current_app.config}, exception: {str(e)}")
+    connection = current_app.config['connection']
+    config = current_app.config['config']
     data = request.json
     email = data.get('email')
     name = data.get('newName')
@@ -33,11 +30,10 @@ def change_name():
         del result["password"]
         token = generate_session_token(result, config)
         result["token"] = token
-        print("USER INFO: ",result)
         stripe.Customer.modify(result["customer_id"], metadata = {"name":name})
         return jsonify({'user': result}), 201
     except Exception as error:
-        print('Error', error)
+        print('Error [Change Name]:', error)
         print(traceback.format_exc())
         return jsonify({'message': 'Internal server error'}), 500
     finally:

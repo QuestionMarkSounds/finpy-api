@@ -16,7 +16,6 @@ def validate_change_email_token():
     try:
         data = request.json
         token = data.get('token')
-        print("Token: ", token, "Length: ", len(token))
         if not token:
             return jsonify({'message': 'Invalid input data'}), 400
         cursor = connection.cursor()
@@ -34,7 +33,7 @@ def validate_change_email_token():
         else:
             return jsonify({'message': 'Invalid token'}), 403
     except Exception as error:
-        print('Error', error)
+        print('Error [JWT]:', error)
         return jsonify({'message': error}), 500
         
     finally:

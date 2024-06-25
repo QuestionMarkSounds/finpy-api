@@ -13,25 +13,24 @@ def password_reset():
     try:
         data = request.json
         email = data.get('email')
-        print("Email: ", email)
+        
         if not email:
             return jsonify({'message': 'Invalid input data'}), 400
         cursor = connection.cursor()
         cursor.execute("SELECT * FROM flutter_users WHERE email = %s"	, (email,))
         connection.commit()
         response = cursor.fetchone()
-        print(response)
         if (response):
             token = resetLink(email, response["name"], "resetLink", config)
             cursor.execute("INSERT INTO flutter_dumpster (data) VALUES (%s)", (token,))
 
             connection.commit()
-            print("Token in: ", token)
+            
             return jsonify({'result': "ok"}), 201
         else:
             return jsonify({'message': 'User not found'}), 403
     except Exception as error:
-        print('Error', error)
+        print('Error [Password Reset]:', error)
         return jsonify({'message': error}), 500
         
     finally:

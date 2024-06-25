@@ -18,7 +18,7 @@ def change_email():
         new_email = data.get('new_email')
         password = data.get('password')
         session_token = data.get('sessionToken')
-        # print("Email: ", email)
+        # 
         try:
             token_payload = validate_request_with_token(session_token, old_email, config)
         except Exception as e:
@@ -36,7 +36,6 @@ def change_email():
         cursor.execute("SELECT * FROM flutter_users WHERE email = %s"	, (old_email,))
         connection.commit()
         response = cursor.fetchone()
-        print(response)
         if (response):
             password_hash = response["password"] 
 
@@ -46,12 +45,12 @@ def change_email():
             token = changeEmailLink(old_email, new_email, response["name"], "changeEmail", config)
             cursor.execute("INSERT INTO flutter_dumpster (data) VALUES (%s)", (token,))
             connection.commit()
-            print("Token in: ", token)
+            
             return jsonify({'result': "ok"}), 201
         else:
             return jsonify({'message': 'User not found'}), 403
     except Exception as error:
-        print('Error', error)
+        print('Error [Change Email]:', error)
         return jsonify({'message': str(error)}), 500
         
     finally:

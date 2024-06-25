@@ -13,11 +13,10 @@ delete_account_bp = Blueprint('delete_account', __name__, template_folder='templ
 
 @delete_account_bp.route('/delete-account', methods=['POST'])
 def delete_account():
-    try:
-        connection = current_app.config['connection']
-        config = current_app.config['config']
-    except TypeError as e:
-        print(f"fill: {current_app.config}, exception: {str(e)}")
+
+    connection = current_app.config['connection']
+    config = current_app.config['config']
+
     data = request.json
     email = data.get('email')
     password = data.get('password')
@@ -31,7 +30,6 @@ def delete_account():
         cursor.execute("SELECT * FROM public.flutter_users WHERE email = %s", (token_payload["email"],))
         result = cursor.fetchone()
         if result:
-            print("RESULT: ", result)
             password_hash = result["password"] 
             if check_password_hash(password_hash, password+config["ROACH_KING"]):
                 cursor.execute("DELETE FROM public.flutter_users WHERE email = %s RETURNING *", (token_payload["email"],))
@@ -40,7 +38,41 @@ def delete_account():
                 return jsonify({'result': 'account deleted'}), HTTPStatus.OK.value
         return jsonify({'message': 'Invalid credentials'}), 403
     except Exception as error:
-        print('Error', error)
+        print('Error [Delete Account]:', error)
+        print(traceback.format_exc())
+        return jsonify({'message': 'Internal server error'}), 500
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+            
+            
+@delete_account_bp.route('/delete-account-platform', methods=['POST'])
+def delete_account_platform():
+
+    connection = current_app.config['connection']
+    config = current_app.config['config']
+
+    data = request.json
+    email = data.get('email')
+    session_token = data.get('sessionToken')
+    try:
+        token_payload = validate_request_with_token(session_token, email, config)
+    except Exception as e:
+        return jsonify({'message': str(e)}), 403
+    try:
+        cursor = connection.cursor()
+        cursor.execute("SELECT * FROM public.flutter_users WHERE email = %s", (token_payload["email"],))
+        result = cursor.fetchone()
+        if result:
+            platform = result["platform"] 
+            if platform != "none":
+                cursor.execute("DELETE FROM public.flutter_users WHERE email = %s RETURNING *", (token_payload["email"],))
+                if result["customer_id"] != None:
+                    delete_customer_request(result["customer_id"])
+                return jsonify({'result': 'account deleted'}), HTTPStatus.OK.value
+        return jsonify({'message': 'Invalid credentials'}), 403
+    except Exception as error:
+        print('Error [Delete Account]:', error)
         print(traceback.format_exc())
         return jsonify({'message': 'Internal server error'}), 500
     finally:

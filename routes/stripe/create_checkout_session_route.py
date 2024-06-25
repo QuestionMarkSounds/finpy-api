@@ -33,17 +33,13 @@ def create_checkout_session():
 
     try:
         customer_id_response = get_stripe_customer(email, connection)
-        print(customer_id_response)
         if "customerId" not in  customer_id_response.keys():
             raise Exception(customer_id_response['message'])
         else:
             if user_intent == "portal":
                 customer_portal(customer_id_response["sessionId"])
             elif user_intent == "subscription":
-                print("----sID-----")
-                print(customer_id_response["customerId"])
-                final_response = session_request(None, domain_url, price, email)
-                print(final_response)
+                final_response = session_request(domain_url, price, email)
                 if "sessionId" in final_response.keys():
                     del final_response['sessionId']
                 
@@ -52,7 +48,7 @@ def create_checkout_session():
                 raise Exception("Invalid user intent")
         
     except Exception as e:
-        print(e)
+        print("Error [Checkout Session]:", e)
         print(traceback.format_exc())
         return jsonify({'error': {'message': str(e)}}), 400
     
