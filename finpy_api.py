@@ -126,7 +126,7 @@ stripe.set_app_info(
     url='https://github.com/stripe-samples/checkout-single-subscription')
 
 # stripe.api_version = '2020-08-27'
-stripe.api_key = config['STRIPE_SECRET_KEY']
+stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
 
 def delete_old_rows():
     # Connect to the database
