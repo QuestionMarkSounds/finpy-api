@@ -10,11 +10,11 @@ class Subscription:
     subscriptions = [ 
         {
             "key": "basic", 
-            "id": config["BASIC_PROD_ID"]
+            "id": os.environ.get("BASIC_PROD_ID")
         }, 
         {   
             "key": "premium", 
-            "id": config["PREMIUM_PROD_ID"]
+            "id": os.environ.get("PREMIUM_PROD_ID")
         }
     ]
 

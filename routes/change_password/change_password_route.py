@@ -35,7 +35,7 @@ def change_password():
             
             password_hash = result["password"] 
 
-            if check_password_hash(password_hash, old_password+config["ROACH_KING"]):
+            if check_password_hash(password_hash, old_password+os.environ.get("ROACH_KING")):
                 pass
                 
             else:
@@ -43,7 +43,7 @@ def change_password():
         else:
             return jsonify({'message': 'Not a registered user'}), HTTPStatus.NOT_FOUND.value
 
-        password = data.get('new_password') + config["ROACH_KING"]
+        password = data.get('new_password') + os.environ.get("ROACH_KING")
         password_hash = generate_password_hash(password)
 
         cursor = connection.cursor()

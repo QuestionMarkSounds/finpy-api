@@ -10,7 +10,7 @@ def generate_session_token(user_info, config):
     payload_data = {
         "id": user["id"],
         # "created_at": user["created_at"],
-        "email": user["email"] + config["ROACH_PRINCESS"],
+        "email": user["email"] + os.environ.get("ROACH_PRINCESS"),
         "subscription_type": user["subscription_type"],
         "verified": user["verified"],
         "name": user["name"],
@@ -36,7 +36,7 @@ def decode_session_token(token, config):
             algorithms=[header_data['alg'], ]
         )
         
-        payload["email"].replace(config["ROACH_PRINCESS"], "")
+        payload["email"].replace(os.environ.get("ROACH_PRINCESS"), "")
         return payload
     except jwt.ExpiredSignatureError as error:
         raise Exception("Token expired")
@@ -44,7 +44,7 @@ def decode_session_token(token, config):
 
 def validate_request_with_token(token, email, config):
     payload = decode_session_token(token, config)
-    payload["email"] = payload["email"].replace(config["ROACH_PRINCESS"], "")
+    payload["email"] = payload["email"].replace(os.environ.get("ROACH_PRINCESS"), "")
     if email != payload["email"]:
         raise Exception("Invalid token")
     

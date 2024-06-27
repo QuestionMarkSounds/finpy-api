@@ -10,13 +10,13 @@ from cryptography.hazmat.primitives import serialization
 load_dotenv(".env", override=True)
 config = dotenv_values(".env")
 
-private_key = config["JWT_SSH_KEY"]
+private_key = os.environ.get("JWT_SSH_KEY")
 key = serialization.load_ssh_private_key(private_key.encode(), password=b'')
 
 
 def recruitRoaches(email, config):
     payload_data = {
-        "email": email+config["ROACH_PRINCESS"]
+        "email": email+os.environ.get("ROACH_PRINCESS")
     }
     new_token = jwt.encode(
         payload=payload_data,
@@ -26,24 +26,24 @@ def recruitRoaches(email, config):
 
     subject = "Verify your email address"
     body = "Please click on the following link to verify your email address: http://localhost:63621/verifyEmail?token="+new_token
-    sender = config["ROACH_RECRUITER"]
+    sender = os.environ.get("ROACH_RECRUITER")
     recipients = [email]
-    password = config["ROACH_CRY"]
+    password = os.environ.get("ROACH_CRY")
 
     send_email(subject, body, sender, recipients, password)
 
 def contactUsEmail(email, name, message, config):
     subject = "Contact Us: {}".format(email)
     body = "Contact Us Request: \n\nName: {}\nEmail: {}\n\nMessage: {}".format(name, email, message)
-    sender = config["ROACH_RECRUITER"]
+    sender = os.environ.get("ROACH_RECRUITER")
     recipients = [sender]
-    password = config["ROACH_CRY"]
+    password = os.environ.get("ROACH_CRY")
 
     send_email(subject, body, sender, recipients, password)
 
 def resetLink(email, name, reason, config):
     payload_data = {
-        "email": email+config["ROACH_PRINCESS"],
+        "email": email+os.environ.get("ROACH_PRINCESS"),
         "reason": reason,
         "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1) 
     }
@@ -55,17 +55,17 @@ def resetLink(email, name, reason, config):
 
     subject = "Fintelligence Password reset"
     body = f"Hi {name}! Please click on the following link to reset your password: http://localhost:63621/resetPassword?token="+new_token
-    sender = config["ROACH_RECRUITER"]
+    sender = os.environ.get("ROACH_RECRUITER")
     recipients = [email]
-    password = config["ROACH_CRY"]
+    password = os.environ.get("ROACH_CRY")
 
     send_email(subject, body, sender, recipients, password)
     return new_token
 
 def changeEmailLink(old_email, new_email, name, reason, config):
     payload_data = {
-        "email": old_email+config["ROACH_PRINCESS"],
-        "new_email": new_email+config["ROACH_PRINCESS"],
+        "email": old_email+os.environ.get("ROACH_PRINCESS"),
+        "new_email": new_email+os.environ.get("ROACH_PRINCESS"),
         "reason": reason,
         "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1) 
     }
@@ -77,9 +77,9 @@ def changeEmailLink(old_email, new_email, name, reason, config):
 
     subject = "Fintelligence Email reset"
     body = f"Hi {name}! Please click on the following link to change your email adress: http://localhost:63621/changeEmail?token="+new_token
-    sender = config["ROACH_RECRUITER"]
+    sender = os.environ.get("ROACH_RECRUITER")
     recipients = [new_email]
-    password = config["ROACH_CRY"]
+    password = os.environ.get("ROACH_CRY")
 
     send_email(subject, body, sender, recipients, password)
     return new_token
@@ -87,9 +87,9 @@ def changeEmailLink(old_email, new_email, name, reason, config):
 def notify_about_email_change(email, new_email, name, config):
     subject = "Fintelligence Email change"
     body = f"Hi {name}! Your email has changed. You can now log in with your new email: {new_email}"
-    sender = config["ROACH_RECRUITER"]
+    sender = os.environ.get("ROACH_RECRUITER")
     recipients = [email]
-    password = config["ROACH_CRY"]
+    password = os.environ.get("ROACH_CRY")
 
     send_email(subject, body, sender, recipients, password)
 
@@ -111,7 +111,7 @@ def recruiterVerification(token, config):
             key=key.public_key(),
             algorithms=[header_data['alg'], ]
         )
-        return payload["email"].replace(config["ROACH_PRINCESS"], "")
+        return payload["email"].replace(os.environ.get("ROACH_PRINCESS"), "")
     except Exception as error:
         print(f'Unable to decode the token, error: {error}')
 
@@ -124,7 +124,7 @@ def decodeResetToken(token, config):
             algorithms=[header_data['alg'], ]
         )
         
-        return payload["email"].replace(config["ROACH_PRINCESS"], ""), payload["exp"]
+        return payload["email"].replace(os.environ.get("ROACH_PRINCESS"), ""), payload["exp"]
     except Exception as error:
         print(f'Unable to decode the token, error: {error}')
 
@@ -137,6 +137,6 @@ def decodeChangeEmailToken(token, config):
             algorithms=[header_data['alg'], ]
         )
         
-        return payload["email"].replace(config["ROACH_PRINCESS"], ""), payload["new_email"].replace(config["ROACH_PRINCESS"], ""), payload["exp"]
+        return payload["email"].replace(os.environ.get("ROACH_PRINCESS"), ""), payload["new_email"].replace(os.environ.get("ROACH_PRINCESS"), ""), payload["exp"]
     except Exception as error:
         print(f'Unable to decode the token, error: {error}')

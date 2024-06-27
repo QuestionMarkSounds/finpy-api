@@ -15,7 +15,7 @@ def complete_password_reset():
     try:
         data = request.json
         token = data.get('token')
-        password = data.get('password') + config["ROACH_KING"]
+        password = data.get('password') + os.environ.get("ROACH_KING")
         password_hash = generate_password_hash(password)
         if not token or not password:
             return jsonify({'message': 'Invalid input data'}), 400

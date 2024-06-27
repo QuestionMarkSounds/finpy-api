@@ -28,7 +28,7 @@ def login():
                 return jsonify({'message': 'User registered using different authentication method'}), 403
             password_hash = result["password"] 
 
-            if check_password_hash(password_hash, password+config["ROACH_KING"]):
+            if check_password_hash(password_hash, password+os.environ.get("ROACH_KING")):
                 reply = result
                 del reply["password"]
                 token =generate_session_token(reply, config)

@@ -23,11 +23,11 @@ def get_db_connection():
     try:
         
         connection = psycopg2.connect(
-            dbname=config["INFESTATION_PROPAGATOR"], 
-            user=config["INFESTATION_TARGET"],
-            password=config["INFESTATION_KEY"], 
-            host=config["INFESTATION_HOST"],
-            port=config["INFESTANT_AMOUNT"],
+            dbname=os.environ.get("INFESTATION_PROPAGATOR"), 
+            user=os.environ.get("INFESTATION_TARGET"),
+            password=os.environ.get("INFESTATION_KEY"), 
+            host=os.environ.get("INFESTATION_HOST"),
+            port=os.environ.get("INFESTANT_AMOUNT"),
             cursor_factory=RealDictCursor
         )
         print('Successful connection to the database')

@@ -31,7 +31,7 @@ def delete_account():
         result = cursor.fetchone()
         if result:
             password_hash = result["password"] 
-            if check_password_hash(password_hash, password+config["ROACH_KING"]):
+            if check_password_hash(password_hash, password+os.environ.get("ROACH_KING")):
                 cursor.execute("DELETE FROM public.flutter_users WHERE email = %s RETURNING *", (token_payload["email"],))
                 if result["customer_id"] != None:
                     delete_customer_request(result["customer_id"])

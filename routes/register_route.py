@@ -21,7 +21,7 @@ def registration():
         email = data.get('email')
         if email != recruiterVerification(token, config):
             return jsonify({'message': 'Invalid token'}), 403
-        password = data.get('password') + config["ROACH_KING"]
+        password = data.get('password') + os.environ.get("ROACH_KING")
         password_hash = generate_password_hash(password)
         if not email or not name or not password:
             return jsonify({'message': 'Invalid input data'}), 400

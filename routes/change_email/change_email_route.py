@@ -39,7 +39,7 @@ def change_email():
         if (response):
             password_hash = response["password"] 
 
-            if not check_password_hash(password_hash, password+config["ROACH_KING"]):
+            if not check_password_hash(password_hash, password+os.environ.get("ROACH_KING")):
                 return jsonify({'message': 'Invalid credentials'}), 403
 
             token = changeEmailLink(old_email, new_email, response["name"], "changeEmail", config)
