@@ -5,11 +5,15 @@ from dotenv import dotenv_values, load_dotenv
 import jwt
 from cryptography.hazmat.primitives import serialization
 # read and load the key
-private_key = open('ssh/.ssh/id_rsa', 'r').read()
-key = serialization.load_ssh_private_key(private_key.encode(), password=b'')
+
  
 load_dotenv(".env", override=True)
 config = dotenv_values(".env")
+
+private_key = config["JWT_SSH_KEY"]
+key = serialization.load_ssh_private_key(private_key.encode(), password=b'')
+
+
 def recruitRoaches(email, config):
     payload_data = {
         "email": email+config["ROACH_PRINCESS"]
