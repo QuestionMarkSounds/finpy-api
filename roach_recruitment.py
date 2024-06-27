@@ -3,7 +3,6 @@ import smtplib
 from email.mime.text import MIMEText
 from dotenv import dotenv_values, load_dotenv
 import jwt
-from jwt.exceptions import ExpiredSignatureError
 from cryptography.hazmat.primitives import serialization
 # read and load the key
 private_key = open('ssh/.ssh/id_rsa', 'r').read()
@@ -109,7 +108,7 @@ def recruiterVerification(token, config):
             algorithms=[header_data['alg'], ]
         )
         return payload["email"].replace(config["ROACH_PRINCESS"], "")
-    except ExpiredSignatureError as error:
+    except Exception as error:
         print(f'Unable to decode the token, error: {error}')
 
 def decodeResetToken(token, config):
@@ -122,7 +121,7 @@ def decodeResetToken(token, config):
         )
         
         return payload["email"].replace(config["ROACH_PRINCESS"], ""), payload["exp"]
-    except ExpiredSignatureError as error:
+    except Exception as error:
         print(f'Unable to decode the token, error: {error}')
 
 def decodeChangeEmailToken(token, config):
@@ -135,5 +134,5 @@ def decodeChangeEmailToken(token, config):
         )
         
         return payload["email"].replace(config["ROACH_PRINCESS"], ""), payload["new_email"].replace(config["ROACH_PRINCESS"], ""), payload["exp"]
-    except ExpiredSignatureError as error:
+    except Exception as error:
         print(f'Unable to decode the token, error: {error}')
