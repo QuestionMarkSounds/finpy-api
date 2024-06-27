@@ -1,4 +1,5 @@
 import datetime
+import os
 import jwt
 from cryptography.hazmat.primitives import serialization
 from flask import current_app

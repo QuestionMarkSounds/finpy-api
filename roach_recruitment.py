@@ -1,4 +1,5 @@
 import datetime
+import os
 import smtplib
 from email.mime.text import MIMEText
 from dotenv import dotenv_values, load_dotenv
