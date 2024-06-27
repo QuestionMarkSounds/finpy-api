@@ -42,7 +42,7 @@ def login():
     except Exception as error:
         print('Error [Login]:', error)
         print(traceback.format_exc())
-        return jsonify({'message': error}), 500
+        return jsonify({'message': str(error)}), 500
     finally:
         if 'cursor' in locals():
             cursor.close()
