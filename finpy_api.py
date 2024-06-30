@@ -150,7 +150,7 @@ def hello_world():
 
 @app.route('/<path:path>')
 def serve_static_file(path):
-    return send_from_directory(app.static_folder, path)
+    return send_from_directory(app.static_folder, 'index.html')
 
 def close_connection():
     if 'connection' in globals():
