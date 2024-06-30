@@ -153,9 +153,9 @@ flutter_paths = ['/home-view', '/home', "/about", "/login", "/sign-up", "/dashbo
 for path in flutter_paths:
     app.add_url_rule(path, endpoint=path, view_func=index)
 
-# @app.route('/<path:path>')
-# def serve_static_file(path):
-#     return send_from_directory(app.static_folder, path)
+@app.route('/<path:path>')
+def serve_static_file(path):
+    return send_from_directory(app.static_folder, path)
 
 def close_connection():
     if 'connection' in globals():
