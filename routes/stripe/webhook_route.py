@@ -18,7 +18,7 @@ def webhook_received():
     config = current_app.config['config']
     # You can use webhooks to receive information about asynchronous payment events.
     # For more about our webhook events check out https://stripe.com/docs/webhooks.
-    webhook_secret = config['STRIPE_WEBHOOK_SECRET']
+    webhook_secret = os.environ.get('STRIPE_WEBHOOK_SECRET')
     request_data = json.loads(request.data)
 
     if webhook_secret:
