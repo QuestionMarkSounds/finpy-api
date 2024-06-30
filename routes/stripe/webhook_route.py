@@ -30,7 +30,7 @@ def webhook_received():
                 payload=request.data, sig_header=signature, secret=webhook_secret)
             data = event['data']
         except Exception as e:
-            return e
+            return jsonify({'status': str(e)}), 500
         # Get the type of webhook event sent - used to check the status of PaymentIntents.
         event_type = event['type']
     else:
