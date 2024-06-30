@@ -148,7 +148,7 @@ scheduler.start()
 def index():
     return send_from_directory(app.static_folder, 'index.html')
 
-flutter_paths = ['/home-view', '/home', "/about", "/login", "/sign-up", "/dashboard", "/subscribe", "/faq", "/verification", "/user_details", "/subscribe"]
+flutter_paths = ['/home-view', '/home', "/about", "/login", "/sign-up", "/dashboard", "/subscribe", "/subscribe/success", "/subscribe/canceled", "/faq", "/verification", "/user_details", "/subscribe"]
 
 for path in flutter_paths:
     app.add_url_rule(path, endpoint=path, view_func=index)
