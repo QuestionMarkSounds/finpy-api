@@ -145,12 +145,17 @@ scheduler.add_job(delete_old_rows, 'interval', hours=1)  # Run every hour
 scheduler.start()
 
 @app.route('/')
-def hello_world():
+def index():
     return send_from_directory(app.static_folder, 'index.html')
 
-@app.route('/<path:path>')
-def serve_static_file(path):
-    return send_from_directory(app.static_folder, path)
+flutter_paths = ['/home-view', '/home', "/about", "/login", "/sign-up", "/dashboard", "/subscribe", "/faq", "/verification", "/user_details", "/subscribe"]
+
+for path in flutter_paths:
+    app.add_url_rule(path, endpoint=path, view_func=index)
+
+# @app.route('/<path:path>')
+# def serve_static_file(path):
+#     return send_from_directory(app.static_folder, path)
 
 def close_connection():
     if 'connection' in globals():
