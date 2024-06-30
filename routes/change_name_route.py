@@ -11,7 +11,7 @@ from utils.jwt_utils import validate_request_with_token
 
 change_name_bp = Blueprint('change_name', __name__, template_folder='templates')
 
-@change_name_bp.route('/change-name', methods=['POST'])
+@change_name_bp.route('/api/change-name', methods=['POST'])
 def change_name():
     connection = current_app.config['connection']
     config = current_app.config['config']

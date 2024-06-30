@@ -11,7 +11,7 @@ from routes.stripe.stripe_customer import set_stripe_customer, set_stripe_subscr
 
 stripe_webhook_bp = Blueprint('stripe_webhook', __name__, template_folder='templates')
 
-@stripe_webhook_bp.route('/webhook', methods=['POST'])
+@stripe_webhook_bp.route('/api/webhook', methods=['POST'])
 def webhook_received():
 
     connection = current_app.config['connection']

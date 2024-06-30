@@ -8,7 +8,7 @@ from roach_recruitment import recruitRoaches, recruiterVerification, contactUsEm
 contact_us_bp = Blueprint('contact_us', __name__, template_folder='templates')
 
 
-@contact_us_bp.route('/contact-us', methods=['POST'])
+@contact_us_bp.route('/api/contact-us', methods=['POST'])
 def contact_us():
     connection = current_app.config['connection']
     config = current_app.config['config']

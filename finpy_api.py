@@ -1,11 +1,9 @@
 import datetime
-import json
 import os
-from flask import Blueprint, Flask, jsonify, request
+from flask import Flask, send_from_directory
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import atexit
-import traceback
 import stripe
 from werkzeug.security import check_password_hash, generate_password_hash
 from dotenv import dotenv_values
@@ -38,7 +36,7 @@ def get_db_connection():
 
 connection = get_db_connection()
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='client/web')
 
 app.config['connection'] = connection
 app.config['config'] = config
@@ -148,7 +146,11 @@ scheduler.start()
 
 @app.route('/')
 def hello_world():
-    return 'Hello world!'
+    return send_from_directory(app.static_folder, 'index.html')
+
+@app.route('/<path:path>')
+def serve_static_file(path):
+    return send_from_directory(app.static_folder, path)
 
 def close_connection():
     if 'connection' in globals():

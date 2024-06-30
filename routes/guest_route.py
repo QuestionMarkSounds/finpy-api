@@ -8,7 +8,7 @@ from roach_recruitment import recruitRoaches, recruiterVerification
 guest_bp = Blueprint('guest', __name__, template_folder='templates')
 
 
-@guest_bp.route('/guest', methods=['POST'])
+@guest_bp.route('/api/guest', methods=['POST'])
 def unverified_guest():
     connection = current_app.config['connection']
     config = current_app.config['config']

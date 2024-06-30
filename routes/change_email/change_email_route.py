@@ -9,7 +9,7 @@ from utils.jwt_utils import validate_request_with_token
 change_email_bp = Blueprint('change_email', __name__, template_folder='templates')
 
 
-@change_email_bp.route('/change-email', methods=['POST'])
+@change_email_bp.route('/api/change-email', methods=['POST'])
 def change_email():
     connection = current_app.config['connection']
     config = current_app.config['config']

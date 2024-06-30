@@ -9,7 +9,7 @@ from roach_recruitment import recruiterVerification
 jwt_verification_bp = Blueprint('jwt_verification', __name__, template_folder='templates')
 
 
-@jwt_verification_bp.route('/verification', methods=['POST'])
+@jwt_verification_bp.route('/api/verification', methods=['POST'])
 def jwt_verification():
     connection = current_app.config['connection']
     config = current_app.config['config']

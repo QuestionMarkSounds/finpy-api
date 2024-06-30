@@ -9,7 +9,7 @@ from utils.jwt_utils import generate_session_token
 
 login_bp = Blueprint('login', __name__, template_folder='templates')
 
-@login_bp.route('/login', methods=['POST'])
+@login_bp.route('/api/login', methods=['POST'])
 def login():
     connection = current_app.config['connection']
     config = current_app.config['config']

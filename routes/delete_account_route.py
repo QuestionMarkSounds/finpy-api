@@ -12,7 +12,7 @@ from routes.stripe.stripe_server import delete_customer_request
 
 delete_account_bp = Blueprint('delete_account', __name__, template_folder='templates')
 
-@delete_account_bp.route('/delete-account', methods=['POST'])
+@delete_account_bp.route('/api/delete-account', methods=['POST'])
 def delete_account():
 
     connection = current_app.config['connection']
@@ -47,7 +47,7 @@ def delete_account():
             cursor.close()
             
             
-@delete_account_bp.route('/delete-account-platform', methods=['POST'])
+@delete_account_bp.route('/api/delete-account-platform', methods=['POST'])
 def delete_account_platform():
 
     connection = current_app.config['connection']

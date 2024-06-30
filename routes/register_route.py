@@ -11,7 +11,7 @@ from utils.jwt_utils import generate_session_token
 
 registration_bp = Blueprint('registration', __name__, template_folder='templates')
 
-@registration_bp.route('/registration', methods=['POST'])
+@registration_bp.route('/api/registration', methods=['POST'])
 def registration():
     connection = current_app.config['connection']
     config = current_app.config['config']

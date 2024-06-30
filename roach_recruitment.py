@@ -26,7 +26,7 @@ def recruitRoaches(email, config):
     )
 
     subject = "Verify your email address"
-    body = "Please click on the following link to verify your email address: http://localhost:63621/verifyEmail?token="+new_token
+    body = "Please click on the following link to verify your email address: {}/verifyEmail?token=".format(os.environ.get("CLIENT_URL"))+new_token
     sender = os.environ.get("ROACH_RECRUITER")
     recipients = [email]
     password = os.environ.get("ROACH_CRY")

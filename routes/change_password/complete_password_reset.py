@@ -9,7 +9,7 @@ from roach_recruitment import decodeResetToken, recruiterVerification
 complete_password_reset_bp = Blueprint('complete_password_reset', __name__, template_folder='templates')
 
 
-@complete_password_reset_bp.route('/complete-password-reset', methods=['POST'])
+@complete_password_reset_bp.route('/api/complete-password-reset', methods=['POST'])
 def complete_password_reset():
     connection = current_app.config['connection']
     config = current_app.config['config']

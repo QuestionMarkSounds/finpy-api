@@ -9,7 +9,7 @@ from roach_recruitment import decodeChangeEmailToken, recruiterVerification
 
 validate_change_email_token_bp = Blueprint('validate_change_email_token', __name__, template_folder='templates')
 
-@validate_change_email_token_bp.route('/validate-change-email-token', methods=['POST'])
+@validate_change_email_token_bp.route('/api/validate-change-email-token', methods=['POST'])
 def validate_change_email_token():
     connection = current_app.config['connection']
     config = current_app.config['config']

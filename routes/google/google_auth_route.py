@@ -10,7 +10,7 @@ from utils.jwt_utils import validate_request_with_token
 
 google_auth_bp = Blueprint('google_auth', __name__, template_folder='templates')
 
-@google_auth_bp.route('/google-auth', methods=['POST'])
+@google_auth_bp.route('/api/google-auth', methods=['POST'])
 def google_auth():
 
     connection = current_app.config['connection']

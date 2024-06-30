@@ -8,7 +8,7 @@ from roach_recruitment import recruiterVerification
 
 subscribe_bp = Blueprint('subscribe', __name__, template_folder='templates')
 
-@subscribe_bp.route('/subscribe', methods=['POST'])
+@subscribe_bp.route('/api/subscribe', methods=['POST'])
 def subscribe():
     connection = current_app.config['connection']
     config = current_app.config['config']

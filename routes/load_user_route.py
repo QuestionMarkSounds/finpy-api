@@ -10,7 +10,7 @@ from utils.jwt_utils import validate_request_with_token
 
 user_bp = Blueprint('user', __name__, template_folder='templates')
 
-@user_bp.route('/user', methods=['POST'])
+@user_bp.route('/api/user', methods=['POST'])
 def load_user_data():
 
     connection = current_app.config['connection']

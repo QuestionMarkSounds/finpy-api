@@ -6,7 +6,7 @@ from roach_recruitment import recruiterVerification, resetLink
 
 password_reset_bp = Blueprint('password_reset', __name__, template_folder='templates')
 
-@password_reset_bp.route('/password-reset', methods=['POST'])
+@password_reset_bp.route('/api/password-reset', methods=['POST'])
 def password_reset():
     connection = current_app.config['connection']
     config = current_app.config['config']

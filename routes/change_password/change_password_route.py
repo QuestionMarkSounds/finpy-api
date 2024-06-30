@@ -10,7 +10,7 @@ from utils.jwt_utils import validate_request_with_token
 
 change_password_bp = Blueprint('change_password', __name__, template_folder='templates')
 
-@change_password_bp.route('/change-password', methods=['POST'])
+@change_password_bp.route('/api/change-password', methods=['POST'])
 def change_password():
     connection = current_app.config['connection']
     config = current_app.config['config']

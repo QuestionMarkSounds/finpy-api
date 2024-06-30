@@ -7,7 +7,7 @@ from roach_recruitment import decodeResetToken, recruiterVerification
 
 validate_password_reset_token_bp = Blueprint('validate_password_reset_token', __name__, template_folder='templates')
 
-@validate_password_reset_token_bp.route('/validate-password-reset-token', methods=['POST'])
+@validate_password_reset_token_bp.route('/api/validate-password-reset-token', methods=['POST'])
 def validate_password_reset_token():
     connection = current_app.config['connection']
     config = current_app.config['config']

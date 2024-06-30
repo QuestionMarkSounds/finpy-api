@@ -13,7 +13,7 @@ from utils.jwt_utils import validate_request_with_token
 
 stripe_ccs_bp = Blueprint('stripe_create_checkout_session', __name__, template_folder='templates')
 
-@stripe_ccs_bp.route('/create-checkout-session', methods=['POST'])
+@stripe_ccs_bp.route('/api/create-checkout-session', methods=['POST'])
 def create_checkout_session():
 
     connection = current_app.config['connection']
@@ -52,7 +52,7 @@ def create_checkout_session():
         print(traceback.format_exc())
         return jsonify({'error': {'message': str(e)}}), 400
     
-@stripe_ccs_bp.route('/checkout-session', methods=['GET'])
+@stripe_ccs_bp.route('/api/checkout-session', methods=['GET'])
 def get_checkout_session():
     id = request.args.get('sessionId')
     checkout_session = stripe.checkout.Session.retrieve(id)

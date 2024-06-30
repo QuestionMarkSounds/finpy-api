@@ -11,7 +11,7 @@ from utils.jwt_utils import validate_request_with_token
 stripe_customer_portal_bp = Blueprint('stripe_customer_portal', __name__, template_folder='templates')
 
 
-@stripe_customer_portal_bp.route('/customer-portal', methods=['POST'])
+@stripe_customer_portal_bp.route('/api/customer-portal', methods=['POST'])
 def get_customer_portal():
     connection = current_app.config['connection']
     config = current_app.config['config']

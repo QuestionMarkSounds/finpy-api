@@ -9,7 +9,7 @@ from roach_recruitment import decodeResetToken, notify_about_email_change, recru
 complete_email_reset_bp = Blueprint('complete_email_reset', __name__, template_folder='templates')
 
 
-@complete_email_reset_bp.route('/complete-email-reset', methods=['POST'])
+@complete_email_reset_bp.route('/api/complete-email-reset', methods=['POST'])
 def complete_email_reset():
     connection = current_app.config['connection']
     config = current_app.config['config']
